@@ -1,0 +1,59 @@
+name: CobraCorral
+version: 1.0
+author: TheAcademician
+main: us.drome.cobracorral.CobraCorral
+
+permissions:
+    ccorral.admin:
+        description: Access to all CobraCorral commands.
+        children:
+            ccorral.lock: true
+            ccorral.list: true
+            ccorral.list-all: true
+            ccorral.gps: true
+            ccorral.gps-all: true
+            ccorall.tp: true
+    ccorral.lock:
+        description: Lock a Horse entity
+        default: true
+    ccorral.list:
+        description: List your locked Horses
+        default: true
+    ccorral.list-all:
+        description: List any player's locked Horses
+        default: op
+    ccorral.gps:
+        description: Allows a player to locate a missing horse.
+        default: true
+    ccorral.gps-all:
+        description: Locate any horse and display precise coordinates.
+        default: op
+    ccorral.tp:
+        description: Teleport a specific horse to your location.
+        default: op
+
+commands:
+    corral:
+        description: Lock a horse so only the owner can ride/harm it.
+        permission: ccorral.lock
+        usage: /corral Right click on a horse you own.
+    uncorral:
+        description: Unlock a horse that you own allowing others to ride/harm it.
+        permission: ccorral.lock
+        usage: /uncorral Right click on a locked horse you own.
+    testdrive:
+        description: Temporarily unlock a horse allowing someone to ride it.
+        permission: ccorral.lock
+        usage: /testdrive Right click on a locked horse you own.
+    horse-list:
+        description: List all the horses owned by a player
+        permission: ccorral.list
+        usage: /horse-list [<player>]
+    horse-gps:
+        description: Locate a horse that you own.
+        permission: ccorral.gps
+        usage: /horse-gps [<player>] <horse#>
+    horse-tp:
+        description: Teleport a horse to your location
+        permission: ccorral.tp
+        usage: /horse-tp [<player>] <horse#>
