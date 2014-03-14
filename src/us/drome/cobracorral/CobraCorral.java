@@ -6,14 +6,17 @@ import java.util.List;
 import java.util.UUID;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
+import org.bukkit.Sound;
 import org.bukkit.World;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Horse;
 import org.bukkit.entity.Player;
+import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.util.Vector;
 
 public class CobraCorral extends JavaPlugin {
     public final Configuration config = new Configuration(this);
@@ -126,55 +129,120 @@ public class CobraCorral extends JavaPlugin {
                 break;
             case "horse-gps":
                 if(sender instanceof Player) {
-                    String player = sender.getName();
-                    if(args.length > 1) {
-                        if(sender.hasPermission("ccorral.gps-all") || sender.hasPermission("ccorral.admin")) {
-                            if(getServer().getOfflinePlayer(args[0]).hasPlayedBefore()) {
-                                player = args[0];
-                                List<UUID> horseID = new ArrayList<>();
-                                int target = 0;
-                                try {
-                                    target = Integer.parseInt(args[1]);
-                                } catch (Exception e) {
-                                    target = 1;
-                                }
-                                int count = 1;
-
-                                for(UUID key : config.HORSES.keySet()) {
-                                    if(config.HORSES.containsValue(player)) {
-                                        if(count == target) {
-                                            horseID.add(key);
-                                            break;
-                                        }
-                                        count++;
-                                    }
-                                }
-                                
-                                if(horseID.size() > 0) {
-                                    List<Horse> horses = getHorses(horseID);
-                                    Horse horse = horses.get(1);
-                                    
-                                    Location playerLoc = ((Player)sender).getLocation();
-                                    Location horseLoc = horse.getLocation();
-                                    
-                                } else {
-                                    sender.sendMessage(ChatColor.GRAY + "No horse found by that ID.");
-                                }
-                                
-                            } else {
-                                sender.sendMessage(ChatColor.RED + args[0] + " is not a valid player.");
-                            }
-                        } else { 
-                            sender.sendMessage(ChatColor.RED + "You do not have permission to do that.");
-                        }
-                    } else if(args.length > 0) {
+                    if(args.length > 0) {
+                        String pName = sender.getName();
+                        List<UUID> horseID = new ArrayList<>();
+                        int target = 0;
+                        int count = 1;
                         
+                        if(args.length > 1) {
+                            if(sender.hasPermission("ccorral.gps-all") || sender.hasPermission("ccorral.admin")) {
+                                if(getServer().getOfflinePlayer(args[0]).hasPlayedBefore()) {
+                                    pName = args[0];
+                                    try {
+                                        target = Integer.parseInt(args[1]);
+                                    } catch (NumberFormatException e) {
+                                        sender.sendMessage(ChatColor.GRAY + "Horse ID provided: " + args[1] + ", is not a valid integer.");
+                                        return false;
+                                    }
+                                } else {
+                                    sender.sendMessage(ChatColor.GRAY + args[0] + " is not a valid player.");
+                                    return false;
+                                }
+                            } else { 
+                                sender.sendMessage(ChatColor.RED + "You do not have permission to do that.");
+                                break;
+                            }   
+                        } else {
+                            try {
+                                target = Integer.parseInt(args[0]);
+                            } catch (NumberFormatException e) {
+                                sender.sendMessage(ChatColor.GRAY + "Horse ID provided: " + args[1] + ", is not a valid integer.");
+                                return false;
+                            }
+                        }
+
+                        for(UUID key : config.HORSES.keySet()) {
+                            if(config.HORSES.containsValue(pName)) {
+                                if(count == target) {
+                                    horseID.add(key);
+                                    break;
+                                }
+                                count++;
+                            }
+                        }
+
+                        if(horseID.size() > 0) {
+                            Player player = (Player)sender;
+                            List<Horse> horses = getHorses(horseID);
+                            Horse horse = horses.get(1);
+
+                            Location playerLoc = player.getLocation();
+                            Location horseLoc = horse.getLocation();
+                            if(!player.isInsideVehicle() && player.getWorld().equals(horse.getWorld())) {
+                                Vector vector = horseLoc.toVector().subtract(playerLoc.toVector());
+                                player.getLocation().setDirection(vector);
+                            }
+                            player.playSound(playerLoc, Sound.ARROW_HIT, 1f , 1f);
+                            player.sendMessage(ChatColor.GRAY +
+                                horse.getCustomName() != null ? horse.getCustomName() : horse.getVariant().toString() +
+                                " Located @ X:" + String.valueOf(horseLoc.getX()) + " Y:" + String.valueOf(horseLoc.getY()) +
+                                " Z:" + String.valueOf(horseLoc.getZ() + " World:" + horseLoc.getWorld().getName()));
+                        } else {
+                            sender.sendMessage(ChatColor.GRAY + "No horse found by that ID.");
+                        }
+                    } else {
+                        return false;
                     }
                 } else {
                     sender.sendMessage("That command can only be ran by a Player.");
                 }   
                 break;
             case "horse-tp":
+                if(args.length > 1) {
+                    String pName = "";
+                    List<UUID> horseID = new ArrayList<>();
+                    int target = 0;
+                    int count = 1;
+                    
+                    if(getServer().getOfflinePlayer(args[0]).hasPlayedBefore()) {
+                        pName = args[0];
+                        try {
+                            target = Integer.parseInt(args[1]);
+                        } catch (NumberFormatException e) {
+                            sender.sendMessage(ChatColor.GRAY + "Horse ID provided: " + args[1] + ", is not a valid integer.");
+                            return false;
+                        }
+                    } else {
+                        sender.sendMessage(ChatColor.GRAY + args[0] + " is not a valid player.");
+                        return false;
+                    }
+                    
+                    for(UUID key : config.HORSES.keySet()) {
+                        if(config.HORSES.containsValue(pName)) {
+                            if(count == target) {
+                                horseID.add(key);
+                                break;
+                            }
+                            count++;
+                        }
+                    }
+
+                    if(horseID.size() > 0) {
+                        Player player = (Player)sender;
+                        List<Horse> horses = getHorses(horseID);
+                        Horse horse = horses.get(1);
+                        horse.teleport(player);
+                        player.playSound(player.getLocation(), Sound.ENDERMAN_TELEPORT, 1f , 1f);
+                        player.sendMessage(ChatColor.GRAY +
+                            horse.getCustomName() != null ? horse.getCustomName() : horse.getVariant().toString() +
+                            " #" + target + " has been teleported to your location!");
+                    } else {
+                        sender.sendMessage(ChatColor.GRAY + "No horse found by that ID.");
+                    }
+                } else {
+                    return false;
+                }
                 break;
         }
         return true;
