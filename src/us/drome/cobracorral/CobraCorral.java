@@ -13,7 +13,6 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Horse;
 import org.bukkit.entity.Player;
-import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.util.Vector;
@@ -66,14 +65,6 @@ public class CobraCorral extends JavaPlugin {
                 if(sender instanceof Player) {
                     ((Player)sender).setMetadata(HORSE_TEST_DRIVE, new FixedMetadataValue(this, null));
                     sender.sendMessage(ChatColor.GRAY + "Right click on a Horse that you own.");
-                } else {
-                    sender.sendMessage("That command can only be ran by a Player.");
-                }
-                break;
-            case "horse-info":
-                if(sender instanceof Player) {
-                    ((Player)sender).setMetadata(HORSE_INFO, new FixedMetadataValue(this, null));
-                    sender.sendMessage(ChatColor.GRAY + "Right click on a Horse to retrieve it's information.");
                 } else {
                     sender.sendMessage("That command can only be ran by a Player.");
                 }
@@ -242,6 +233,14 @@ public class CobraCorral extends JavaPlugin {
                     }
                 } else {
                     return false;
+                }
+                break;
+            case "horse-info":
+                if(sender instanceof Player) {
+                    ((Player)sender).setMetadata(HORSE_INFO, new FixedMetadataValue(this, null));
+                    sender.sendMessage(ChatColor.GRAY + "Right click on a Horse to retrieve it's information.");
+                } else {
+                    sender.sendMessage("That command can only be ran by a Player.");
                 }
                 break;
         }

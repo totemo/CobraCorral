@@ -13,11 +13,12 @@ permissions:
             ccorral.gps: true
             ccorral.gps-all: true
             ccorall.tp: true
+            ccorral.info: true
     ccorral.lock:
         description: Lock a Horse entity
         default: true
     ccorral.list:
-        description: List your locked Horses
+        description: List locked Horses
         default: true
     ccorral.list-all:
         description: List any player's locked Horses
@@ -30,6 +31,9 @@ permissions:
         default: op
     ccorral.tp:
         description: Teleport a specific horse to your location.
+        default: op
+    ccorral.info:
+        description: List information for a specified horse.
         default: op
 
 commands:
@@ -57,3 +61,7 @@ commands:
         description: Teleport a horse to your location
         permission: ccorral.tp
         usage: /horse-tp [<player>] <horse#>
+    horse-info:
+        description: List information for a specified horse.
+        permission: ccorral.info
+        usage: /horse-info Right click on a horse.
