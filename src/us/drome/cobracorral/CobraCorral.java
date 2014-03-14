@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import org.bukkit.ChatColor;
+import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
@@ -125,8 +126,47 @@ public class CobraCorral extends JavaPlugin {
                 break;
             case "horse-gps":
                 if(sender instanceof Player) {
+                    String player = sender.getName();
                     if(args.length > 1) {
-                        
+                        if(sender.hasPermission("ccorral.gps-all") || sender.hasPermission("ccorral.admin")) {
+                            if(getServer().getOfflinePlayer(args[0]).hasPlayedBefore()) {
+                                player = args[0];
+                                List<UUID> horseID = new ArrayList<>();
+                                int target = 0;
+                                try {
+                                    target = Integer.parseInt(args[1]);
+                                } catch (Exception e) {
+                                    target = 1;
+                                }
+                                int count = 1;
+
+                                for(UUID key : config.HORSES.keySet()) {
+                                    if(config.HORSES.containsValue(player)) {
+                                        if(count == target) {
+                                            horseID.add(key);
+                                            break;
+                                        }
+                                        count++;
+                                    }
+                                }
+                                
+                                if(horseID.size() > 0) {
+                                    List<Horse> horses = getHorses(horseID);
+                                    Horse horse = horses.get(1);
+                                    
+                                    Location playerLoc = ((Player)sender).getLocation();
+                                    Location horseLoc = horse.getLocation();
+                                    
+                                } else {
+                                    sender.sendMessage(ChatColor.GRAY + "No horse found by that ID.");
+                                }
+                                
+                            } else {
+                                sender.sendMessage(ChatColor.RED + args[0] + " is not a valid player.");
+                            }
+                        } else { 
+                            sender.sendMessage(ChatColor.RED + "You do not have permission to do that.");
+                        }
                     } else if(args.length > 0) {
                         
                     }
