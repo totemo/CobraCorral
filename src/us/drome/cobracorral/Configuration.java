@@ -16,8 +16,6 @@ public class Configuration {
     }
     
     public void save() {
-        plugin.getConfig().createSection("horses", HORSES);
-        
         plugin.saveConfig();
     }
     
@@ -27,6 +25,9 @@ public class Configuration {
         MAX_HORSES = plugin.getConfig().getInt("max-horses", 2);
         IMMORTALITY = plugin.getConfig().getBoolean("immortality", true);
         AUTO_LOCK = plugin.getConfig().getBoolean("auto-lock", true);
+        if(!plugin.getConfig().contains("horses")) {
+            plugin.getConfig().createSection("horses");
+        }
         HORSES = (Map)plugin.getConfig().getConfigurationSection("horses").getValues(false);
     }
 }

@@ -5,6 +5,7 @@ import org.bukkit.Sound;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Horse;
 import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
@@ -19,6 +20,7 @@ public class CorralListener implements Listener {
         plugin = instance;
     }
     
+    @EventHandler
     public void onPlayerInteractEntity(PlayerInteractEntityEvent event) {
         Player player = event.getPlayer();
         if(event.getRightClicked() instanceof Horse) {
@@ -109,6 +111,7 @@ public class CorralListener implements Listener {
         }
     }
     
+    @EventHandler
     public void onEntityTame(EntityTameEvent event) {
         Entity entity = event.getEntity();
         Player owner = (Player)event.getOwner();
@@ -123,6 +126,7 @@ public class CorralListener implements Listener {
         }
     }
     
+    @EventHandler
     public void onEntityDamage(EntityDamageEvent event) {
         if(event.getEntity() instanceof Horse) {
             Horse horse = (Horse)event.getEntity();
@@ -134,6 +138,7 @@ public class CorralListener implements Listener {
         }
     }
     
+    @EventHandler
     public void onEntityDeath(EntityDeathEvent event) {
         if(event.getEntity() instanceof Horse) {
             Horse horse = (Horse)event.getEntity();
@@ -156,6 +161,7 @@ public class CorralListener implements Listener {
         }
     }
     
+    @EventHandler
     public void clearMetaKeys(Player player) {
         if(player.hasMetadata(CobraCorral.HORSE_INFO)) {
             player.removeMetadata(CobraCorral.HORSE_INFO, plugin);

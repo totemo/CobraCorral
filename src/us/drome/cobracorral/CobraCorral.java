@@ -19,6 +19,7 @@ import org.bukkit.util.Vector;
 
 public class CobraCorral extends JavaPlugin {
     public final Configuration config = new Configuration(this);
+    private CorralListener listener = new CorralListener(this);
     
     //Horse metadata keys.
     public static final String HORSE_TEST_DRIVE = "CobraCorral.test_drive";
@@ -26,20 +27,22 @@ public class CobraCorral extends JavaPlugin {
     public static final String HORSE_LOCK = "CobraCorral.lock";
     public static final String HORSE_UNLOCK = "CobraCorral.unlock";
     
-    public void OnDisable() {
+    public void onDisable() {
         getLogger().info("version " + getDescription().getVersion() + " has been unloaded.");
         config.save();
     }
     
-    public void OnEnable() {
+    public void onEnable() {
         getLogger().info("version " + getDescription().getVersion() + " has begun loading...");
         File configFile = new File(getDataFolder(), "config.yml");
         if(!configFile.exists()) {
-            getConfig().options().copyDefaults();
+            getConfig().options().copyDefaults(true);
             saveConfig();
         }
         
         config.load();
+        
+        getServer().getPluginManager().registerEvents(listener, this);
     }
     
     
