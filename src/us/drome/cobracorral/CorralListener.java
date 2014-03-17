@@ -11,7 +11,7 @@ import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.entity.EntityTameEvent;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
-import org.bukkit.event.player.PlayerLoginEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.metadata.FixedMetadataValue;
 
 public class CorralListener implements Listener {
@@ -33,7 +33,8 @@ public class CorralListener implements Listener {
                 status = horse.hasMetadata(CobraCorral.HORSE_TEST_DRIVE) ? "Test Drive" : status;
                 String UUID = horse.getUniqueId().toString();
                 player.playSound(player.getLocation(), Sound.ORB_PICKUP, 1f, 1f);
-                player.sendMessage(ChatColor.GRAY + "Owner:" + owner + " Status:" + status + " UUID:" + UUID);
+                player.sendMessage("Owner:" + ChatColor.GRAY + owner + ChatColor.RESET + " Status:" +
+                    ChatColor.GRAY + status + ChatColor.RESET + " UUID:" + ChatColor.GRAY + UUID);
                 clearMetaKeys(player);
                 event.setCancelled(true);
             } else if (horse.isTamed()) {
@@ -162,7 +163,7 @@ public class CorralListener implements Listener {
     public void onEntityDeath(EntityDeathEvent event) {
         if(event.getEntity() instanceof Horse) {
             Horse horse = (Horse)event.getEntity();
-            if(plugin.config.HORSES.containsKey(horse.getUniqueId())) {
+            if(plugin.config.HORSES.containsKey(horse.getUniqueId().toString())) {
                 Player owner = (Player)horse.getOwner();
                 Player causedBy = (Player)horse.getPassenger();
                 if(!owner.getName().equalsIgnoreCase(causedBy.getName())) {
@@ -180,13 +181,13 @@ public class CorralListener implements Listener {
                             ", has died due to the owner's actions.");
                     }
                 }
-                plugin.config.HORSES.remove(horse.getUniqueId());
+                plugin.config.HORSES.remove(horse.getUniqueId().toString());
             }
         }
     }
     
     @EventHandler
-    public void onPlayerLogin(PlayerLoginEvent event) {
+    public void onPlayerQuite(PlayerQuitEvent event) {
         Player player = event.getPlayer();
         if(player.getVehicle() != null) {
             if(player.getVehicle() instanceof Horse) {

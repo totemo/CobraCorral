@@ -1,7 +1,6 @@
 package us.drome.cobracorral;
 
 import java.util.Map;
-import java.util.UUID;
 
 public class Configuration {
     private final CobraCorral plugin;
@@ -9,7 +8,7 @@ public class Configuration {
     public int MAX_HORSES;
     public boolean IMMORTALITY;
     public boolean AUTO_LOCK;
-    public Map<UUID, String> HORSES;
+    public Map<String, LockedHorse> HORSES;
     
     public Configuration(CobraCorral instance) {
         plugin = instance;

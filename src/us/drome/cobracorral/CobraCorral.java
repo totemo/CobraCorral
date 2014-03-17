@@ -88,9 +88,9 @@ public class CobraCorral extends JavaPlugin {
                     List<UUID> horseID = new ArrayList<>();
                     List<String> response = new ArrayList<>();
 
-                    for(UUID key : config.HORSES.keySet()) {
-                        if(config.HORSES.containsValue(player)) {
-                            horseID.add(key);
+                    for(String key : config.HORSES.keySet()) {
+                        if(config.HORSES.get(key).equalsIgnoreCase(player)) {
+                            horseID.add(UUID.fromString(key));
                         }
                     }
 
@@ -105,7 +105,7 @@ public class CobraCorral extends JavaPlugin {
                          * # | Name | Color & Style or Type | Armor | World
                          */
                         for(Horse horse : horses) {
-                            response.add(ChatColor.GRAY + String.valueOf(horses.indexOf(horse) + 1) + " | " +
+                            response.add(String.valueOf(horses.indexOf(horse) + 1) + ChatColor.GRAY +  " | " +
                                     (horse.getCustomName() != null ? horse.getCustomName() : "No Name") + " | " +
                                     ((horse.getVariant() == Horse.Variant.HORSE) ? horse.getColor().toString() +
                                         " " + horse.getStyle().toString() : horse.getVariant().toString()) + " | " +
@@ -160,10 +160,10 @@ public class CobraCorral extends JavaPlugin {
                             }
                         }
 
-                        for(UUID key : config.HORSES.keySet()) {
-                            if(config.HORSES.containsValue(pName)) {
+                        for(String key : config.HORSES.keySet()) {
+                            if(config.HORSES.get(key).equalsIgnoreCase(pName)) {
                                 if(count == target) {
-                                    horseID.add(key);
+                                    horseID.add(UUID.fromString(key));
                                     break;
                                 }
                                 count++;
@@ -217,10 +217,10 @@ public class CobraCorral extends JavaPlugin {
                         return false;
                     }
                     
-                    for(UUID key : config.HORSES.keySet()) {
-                        if(config.HORSES.containsValue(pName)) {
+                    for(String key : config.HORSES.keySet()) {
+                        if(config.HORSES.get(key).equalsIgnoreCase(pName)) {
                             if(count == target) {
-                                horseID.add(key);
+                                horseID.add(UUID.fromString(key));
                                 break;
                             }
                             count++;
@@ -231,11 +231,17 @@ public class CobraCorral extends JavaPlugin {
                         Player player = (Player)sender;
                         List<Horse> horses = getHorses(horseID);
                         Horse horse = horses.get(0);
-                        horse.teleport(player);
-                        player.playSound(player.getLocation(), Sound.ENDERMAN_TELEPORT, 1f , 1f);
-                        player.sendMessage(ChatColor.GRAY +
-                            (horse.getCustomName() != null ? horse.getCustomName() : horse.getVariant().toString()) +
-                            " has been teleported to your location!");
+                        if(horse.getPassenger() == null) {
+                            horse.teleport(player);
+                            player.playSound(player.getLocation(), Sound.ENDERMAN_TELEPORT, 1f , 1f);
+                            player.sendMessage(ChatColor.GRAY +
+                                (horse.getCustomName() != null ? horse.getCustomName() : horse.getVariant().toString()) +
+                                " has been teleported to your location!");
+                        } else {
+                            player.sendMessage(ChatColor.GRAY +
+                                (horse.getCustomName() != null ? horse.getCustomName() : horse.getVariant().toString()) +
+                                " is being ridden by " + ((Player)horse.getPassenger()).getName());
+                        }
                     } else {
                         sender.sendMessage(ChatColor.GRAY + "No horse found by that ID.");
                     }
@@ -276,8 +282,8 @@ public class CobraCorral extends JavaPlugin {
     }
     
     public boolean isHorseLocked(Horse horse) {
-        for(UUID key : config.HORSES.keySet()) {
-           if(horse.getUniqueId().equals(key))
+        for(String key : config.HORSES.keySet()) {
+           if(horse.getUniqueId().toString().equals(key))
                return true;
         }
         return false;
@@ -286,7 +292,7 @@ public class CobraCorral extends JavaPlugin {
     public boolean maxHorsesLocked(String player) {
         int count = 0;
         
-        for(UUID key : config.HORSES.keySet()) {
+        for(String key : config.HORSES.keySet()) {
             if(config.HORSES.get(key).equalsIgnoreCase(player)) {
                 count++;
             }
@@ -299,11 +305,11 @@ public class CobraCorral extends JavaPlugin {
     }
     
     public void lockHorse(UUID id, String player) {
-        config.HORSES.put(id, player);
+        config.HORSES.put(id.toString(), player);
     }
     
     public void unlockHorse(UUID id) {
-        config.HORSES.remove(id);
+        config.HORSES.remove(id.toString());
     }
     
     public void helpDisplay(CommandSender sender) {
