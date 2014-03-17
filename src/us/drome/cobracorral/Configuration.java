@@ -16,6 +16,7 @@ public class Configuration {
     }
     
     public void save() {
+        plugin.getConfig().set("horses", HORSES);
         plugin.saveConfig();
     }
     
@@ -28,6 +29,6 @@ public class Configuration {
         if(!plugin.getConfig().contains("horses")) {
             plugin.getConfig().createSection("horses");
         }
-        HORSES = (Map)plugin.getConfig().getConfigurationSection("horses").getValues(false);
+        HORSES = (Map)plugin.getConfig().getConfigurationSection("horses").getValues(true);
     }
 }

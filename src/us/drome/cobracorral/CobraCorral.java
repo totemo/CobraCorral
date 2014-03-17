@@ -28,8 +28,9 @@ public class CobraCorral extends JavaPlugin {
     public static final String HORSE_UNLOCK = "CobraCorral.unlock";
     
     public void onDisable() {
-        getLogger().info("version " + getDescription().getVersion() + " has been unloaded.");
+        getLogger().info("version " + getDescription().getVersion() + " has begun unloading...");
         config.save();
+        getLogger().info("version " + getDescription().getVersion() + " has finished unloading.");
     }
     
     public void onEnable() {
@@ -43,11 +44,15 @@ public class CobraCorral extends JavaPlugin {
         config.load();
         
         getServer().getPluginManager().registerEvents(listener, this);
+        getLogger().info("version " + getDescription().getVersion() + " has finished loading.");
     }
     
     
     public boolean onCommand(CommandSender sender, Command cmd, String alias, String[] args) {
         switch(cmd.getName().toLowerCase()) {
+            case "ccorral":
+                helpDisplay(sender);
+                break;
             case "corral":
                 if(sender instanceof Player) {
                     ((Player)sender).setMetadata(HORSE_LOCK, new FixedMetadataValue(this, null));
@@ -100,13 +105,12 @@ public class CobraCorral extends JavaPlugin {
                          * # | Name | Color & Style or Type | Armor | World
                          */
                         for(Horse horse : horses) {
-                            response.add(ChatColor.GRAY + String.valueOf(horses.indexOf(horse)) + " | " +
-                                    horse.getCustomName() != null ? horse.getCustomName() : "No Name" + " | " +
+                            response.add(ChatColor.GRAY + String.valueOf(horses.indexOf(horse) + 1) + " | " +
+                                    (horse.getCustomName() != null ? horse.getCustomName() : "No Name") + " | " +
                                     ((horse.getVariant() == Horse.Variant.HORSE) ? horse.getColor().toString() +
                                         " " + horse.getStyle().toString() : horse.getVariant().toString()) + " | " +
                                     (horse.getInventory().getArmor() != null ? horse.getInventory().getArmor().getType().toString() :
-                                        "No Armor") + " | " +
-                                    horse.getWorld().getName());
+                                        "No Armor") + " | " + horse.getWorld().getName());
                         }
 
                         for(String line : response) {
@@ -169,19 +173,20 @@ public class CobraCorral extends JavaPlugin {
                         if(horseID.size() > 0) {
                             Player player = (Player)sender;
                             List<Horse> horses = getHorses(horseID);
-                            Horse horse = horses.get(1);
+                            Horse horse = horses.get(0);
 
                             Location playerLoc = player.getLocation();
                             Location horseLoc = horse.getLocation();
                             if(!player.isInsideVehicle() && player.getWorld().equals(horse.getWorld())) {
                                 Vector vector = horseLoc.toVector().subtract(playerLoc.toVector());
-                                player.getLocation().setDirection(vector);
+                                Location newLoc = player.getLocation().setDirection(vector);
+                                player.teleport(newLoc);
                             }
-                            player.playSound(playerLoc, Sound.ARROW_HIT, 1f , 1f);
+                            player.playSound(playerLoc, Sound.SUCCESSFUL_HIT, 1f , 1f);
                             player.sendMessage(ChatColor.GRAY +
-                                horse.getCustomName() != null ? horse.getCustomName() : horse.getVariant().toString() +
-                                " Located @ X:" + String.valueOf(horseLoc.getX()) + " Y:" + String.valueOf(horseLoc.getY()) +
-                                " Z:" + String.valueOf(horseLoc.getZ() + " World:" + horseLoc.getWorld().getName()));
+                                (horse.getCustomName() != null ? horse.getCustomName() : horse.getVariant().toString()) +
+                                " Located @ X:" + String.valueOf(Math.floor(horseLoc.getX())) + " Y:" + String.valueOf(Math.floor(horseLoc.getY())) +
+                                " Z:" + String.valueOf(Math.floor(horseLoc.getZ()) + " World:" + horseLoc.getWorld().getName()));
                         } else {
                             sender.sendMessage(ChatColor.GRAY + "No horse found by that ID.");
                         }
@@ -225,12 +230,12 @@ public class CobraCorral extends JavaPlugin {
                     if(horseID.size() > 0) {
                         Player player = (Player)sender;
                         List<Horse> horses = getHorses(horseID);
-                        Horse horse = horses.get(1);
+                        Horse horse = horses.get(0);
                         horse.teleport(player);
                         player.playSound(player.getLocation(), Sound.ENDERMAN_TELEPORT, 1f , 1f);
                         player.sendMessage(ChatColor.GRAY +
-                            horse.getCustomName() != null ? horse.getCustomName() : horse.getVariant().toString() +
-                            " #" + target + " has been teleported to your location!");
+                            (horse.getCustomName() != null ? horse.getCustomName() : horse.getVariant().toString()) +
+                            " has been teleported to your location!");
                     } else {
                         sender.sendMessage(ChatColor.GRAY + "No horse found by that ID.");
                     }
@@ -299,5 +304,36 @@ public class CobraCorral extends JavaPlugin {
     
     public void unlockHorse(UUID id) {
         config.HORSES.remove(id);
+    }
+    
+    public void helpDisplay(CommandSender sender) {
+        sender.sendMessage(ChatColor.GRAY + "=======" + ChatColor.WHITE + "CobraCorral v" + getDescription().getVersion() +
+            " Commands" + ChatColor.GRAY + "=======");
+        if(sender.hasPermission("ccorral.lock")) {
+            sender.sendMessage(ChatColor.WHITE + "/corral" + ChatColor.GRAY + " | Used to lock a horse you have tamed.");
+            sender.sendMessage(ChatColor.WHITE + "    aliases:" + ChatColor.GRAY + " /horse-lock");
+            sender.sendMessage(ChatColor.WHITE + "/uncorral" + ChatColor.GRAY + " | Used to unlock a horse you have tamed.");
+            sender.sendMessage(ChatColor.WHITE + "    aliases:" + ChatColor.GRAY + " /horse-unlock");
+            sender.sendMessage(ChatColor.WHITE + "/testdrive" + ChatColor.GRAY + " | Temporarily allow others to ride a locked horse.");
+            sender.sendMessage(ChatColor.WHITE + "    aliases:" + ChatColor.GRAY + " /horse-test");
+        }
+        if(sender.hasPermission("ccorral.list")) {
+            sender.sendMessage(ChatColor.WHITE + "/horse-list" + ChatColor.GRAY + " | List all horses you have locked.");
+        }
+        if(sender.hasPermission("ccorral.list-all")) {
+            sender.sendMessage(ChatColor.WHITE + "/horse-list <player>" + ChatColor.GRAY + " | List horses owned by player.");
+        }
+        if(sender.hasPermission("ccorral.gps")) {
+            sender.sendMessage(ChatColor.WHITE + "/horse-gps <horseID>" + ChatColor.GRAY + " | Get the location of a specified horse.");
+        }
+        if(sender.hasPermission("ccorral.gps-all")) {
+            sender.sendMessage(ChatColor.WHITE + "/horse-gps <player> <horseID>" + ChatColor.GRAY + " | Locate a player's horse.");
+        }
+        if(sender.hasPermission("ccorral.tp")) {
+            sender.sendMessage(ChatColor.WHITE + "/horse-tp <player> <horseID>" + ChatColor.GRAY + " | Telelport a horse to you.");
+        }
+        if(sender.hasPermission("ccorral.info")) {
+            sender.sendMessage(ChatColor.WHITE + "/horse-info" + ChatColor.GRAY + " | Display owner and lock status of a horse.");
+        }
     }
 }

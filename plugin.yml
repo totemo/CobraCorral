@@ -7,13 +7,17 @@ permissions:
     ccorral.admin:
         description: Access to all CobraCorral commands.
         children:
+            ccorral.help: true
             ccorral.lock: true
             ccorral.list: true
             ccorral.list-all: true
             ccorral.gps: true
             ccorral.gps-all: true
-            ccorall.tp: true
+            ccorral.tp: true
             ccorral.info: true
+    ccorral.help:
+        description: Show command reference
+        default: true
     ccorral.lock:
         description: Lock a Horse entity
         default: true
@@ -37,18 +41,25 @@ permissions:
         default: op
 
 commands:
+    ccorral:
+        description: Show CobraCorral command help.
+        permission: ccorral.help
+        usage: /ccorral
     corral:
         description: Lock a horse so only the owner can ride/harm it.
         permission: ccorral.lock
         usage: /corral Right click on a horse you own.
+        aliases: ['horse-lock']
     uncorral:
         description: Unlock a horse that you own allowing others to ride/harm it.
         permission: ccorral.lock
         usage: /uncorral Right click on a locked horse you own.
+        aliases: ['horse-unlock']
     testdrive:
         description: Temporarily unlock a horse allowing someone to ride it.
         permission: ccorral.lock
         usage: /testdrive Right click on a locked horse you own.
+        aliases: ['horse-test']
     horse-list:
         description: List all the horses owned by a player
         permission: ccorral.list
