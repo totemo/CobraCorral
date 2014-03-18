@@ -145,6 +145,7 @@ public class CorralListener implements Listener {
                 if(plugin.maxHorsesLocked(owner.getName())){
                     owner.sendMessage(ChatColor.GRAY + "You cannot lock any more horses.");
                 } else {
+                    ((Horse)entity).setOwner(owner);
                     plugin.lockHorse(entity.getUniqueId(), (Horse)entity);
                     owner.playSound(owner.getLocation(), Sound.CLICK, 1f, 1f);
                     owner.sendMessage(ChatColor.GRAY + "This horse has been locked.");

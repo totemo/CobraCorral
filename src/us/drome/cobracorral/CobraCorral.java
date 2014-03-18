@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import org.bukkit.ChatColor;
+import org.bukkit.Chunk;
 import org.bukkit.Location;
 import org.bukkit.Sound;
 import org.bukkit.World;
@@ -87,54 +88,34 @@ public class CobraCorral extends JavaPlugin {
                     }
                     List<UUID> horseIDs = new ArrayList<>();
                     List<String> response = new ArrayList<>();
+                    int count = 0;
 
                     for(String key : config.HORSES.keySet()) {
                         if(config.HORSES.get(key).getOwner().equalsIgnoreCase(player)) {
-                            horseIDs.add(UUID.fromString(key));
+                            count++;
+                            LockedHorse lhorse = config.HORSES.get(key);
+                            Horse horse = getHorse(lhorse.getLocation(this), UUID.fromString(key));
+                            if(horse != null) {
+                                config.HORSES.put(key, lhorse.updateHorse(horse));
+                            } else {
+                                getLogger().info("Failed to load horse " + key.toString() + " from chunk at location " + lhorse.getLocation() +
+                                    " for player " + lhorse.getOwner() + ", using cache.");
+                            }
+                            response.add(String.valueOf(count) + ChatColor.GRAY + " | " + lhorse.getName() + " | " + lhorse.getAppearance() +
+                                " | " + lhorse.getArmor() + " | " + lhorse.getWorld());
                         }
                     }
                     
-                    if(!horseIDs.isEmpty()) {
-                        List<Horse> horses = getHorses(horseIDs);
-                        if(horses.isEmpty()) {
-                            for(UUID key : horseIDs) {
-                                LockedHorse temp = config.HORSES.get(key.toString());
-                                temp = temp.updateHorse(getHorse(temp.getLocation(this)));
-                                config.HORSES.put(key.toString(), temp);
-                            }
-                        }
-                    } else {
-                        sender.sendMessage(ChatColor.GRAY + "There are no horses locked by " +
-                            (player.equalsIgnoreCase(sender.getName()) ? "you" : player) + ".");
-                    }
-
-                    if(horseIDs.size() > 0) {
-                        List<Horse> horses = getHorses(horseIDs);
-                        response.add(ChatColor.GRAY + "Horses locked by " +
+                    if(!response.isEmpty()) {
+                        response.add(0, ChatColor.GRAY + "Horses locked by " +
                             (player.equalsIgnoreCase(sender.getName()) ? "you" : player) + ":");
-                        
-                        
-                        /**
-                         * Iterate through each Horse entity reference and generate a line in the response.
-                         * # | Name | Color & Style or Type | Armor | World
-                         */
-                        for(Horse horse : horses) {
-                            response.add(String.valueOf(horses.indexOf(horse) + 1) + ChatColor.GRAY +  " | " +
-                                    (horse.getCustomName() != null ? horse.getCustomName() : "No Name") + " | " +
-                                    ((horse.getVariant() == Horse.Variant.HORSE) ? horse.getColor().toString() +
-                                        " " + horse.getStyle().toString() : horse.getVariant().toString()) + " | " +
-                                    (horse.getInventory().getArmor() != null ? horse.getInventory().getArmor().getType().toString() :
-                                        "No Armor") + " | " + horse.getWorld().getName());
-                        }
-
                         for(String line : response) {
                             sender.sendMessage(line);
                         }
-
                     } else {
                         sender.sendMessage(ChatColor.GRAY + "There are no horses locked by " +
                             (player.equalsIgnoreCase(sender.getName()) ? "you" : player) + ".");
-                    }                               
+                    }                             
                 } else {
                     sender.sendMessage("That command can only be ran by a Player.");
                 }
@@ -145,7 +126,7 @@ public class CobraCorral extends JavaPlugin {
                         String pName = sender.getName();
                         List<UUID> horseID = new ArrayList<>();
                         int target = 0;
-                        int count = 1;
+                        int count = 0;
                         
                         if(args.length > 1) {
                             if(sender.hasPermission("ccorral.gps-all") || sender.hasPermission("ccorral.admin")) {
@@ -173,37 +154,38 @@ public class CobraCorral extends JavaPlugin {
                                 return false;
                             }
                         }
-
+                        
                         for(String key : config.HORSES.keySet()) {
-                            if(config.HORSES.get(key).equalsIgnoreCase(pName)) {
-                                if(count == target) {
-                                    horseID.add(UUID.fromString(key));
-                                    break;
-                                }
+                            if(config.HORSES.get(key).getOwner().equalsIgnoreCase(pName)) {
                                 count++;
+                                if(count == target) {
+                                    LockedHorse lhorse = config.HORSES.get(key);
+                                    Horse horse = getHorse(lhorse.getLocation(this), UUID.fromString(key));
+                                    if(horse != null) {
+                                        config.HORSES.put(key, lhorse.updateHorse(horse));
+                                    } else {
+                                        getLogger().info("Failed to load horse " + key + " from chunk at location " +
+                                            lhorse.getLocation() + " for player " + lhorse.getOwner() + ", using cache.");
+                                    }
+                                    
+                                    Player player = (Player)sender;
+                                    
+                                    Vector pVector = player.getLocation().toVector();
+                                    Vector hVector = lhorse.getLocation(this).toVector();
+                                    
+                                    if(!player.isInsideVehicle() && player.getWorld().equals(lhorse.getLocation(this).getWorld())) {
+                                        Vector vector = hVector.subtract(pVector);
+                                        player.teleport(player.getLocation().setDirection(vector));
+                                    }
+                                    player.playSound(player.getLocation(), Sound.SUCCESSFUL_HIT, 1f , 1f);
+                                    player.sendMessage(ChatColor.GRAY + lhorse.getName() + " Located @ X:" + lhorse.getX() +
+                                        " Y:" + lhorse.getY() + " Z:" + lhorse.getZ() + " World:" + lhorse.getWorld());
+                                    return true;
+                                }
                             }
                         }
-
-                        if(horseID.size() > 0) {
-                            Player player = (Player)sender;
-                            List<Horse> horses = getHorses(horseID);
-                            Horse horse = horses.get(0);
-
-                            Location playerLoc = player.getLocation();
-                            Location horseLoc = horse.getLocation();
-                            if(!player.isInsideVehicle() && player.getWorld().equals(horse.getWorld())) {
-                                Vector vector = horseLoc.toVector().subtract(playerLoc.toVector());
-                                Location newLoc = player.getLocation().setDirection(vector);
-                                player.teleport(newLoc);
-                            }
-                            player.playSound(playerLoc, Sound.SUCCESSFUL_HIT, 1f , 1f);
-                            player.sendMessage(ChatColor.GRAY +
-                                (horse.getCustomName() != null ? horse.getCustomName() : horse.getVariant().toString()) +
-                                " Located @ X:" + String.valueOf(Math.floor(horseLoc.getX())) + " Y:" + String.valueOf(Math.floor(horseLoc.getY())) +
-                                " Z:" + String.valueOf(Math.floor(horseLoc.getZ()) + " World:" + horseLoc.getWorld().getName()));
-                        } else {
-                            sender.sendMessage(ChatColor.GRAY + "No horse found by that ID.");
-                        }
+                        
+                        sender.sendMessage(ChatColor.GRAY + "No horse found by that ID.");
                     } else {
                         return false;
                     }
@@ -216,7 +198,7 @@ public class CobraCorral extends JavaPlugin {
                     String pName = "";
                     List<UUID> horseID = new ArrayList<>();
                     int target = 0;
-                    int count = 1;
+                    int count = 0;
                     
                     if(getServer().getOfflinePlayer(args[0]).hasPlayedBefore()) {
                         pName = args[0];
@@ -232,33 +214,38 @@ public class CobraCorral extends JavaPlugin {
                     }
                     
                     for(String key : config.HORSES.keySet()) {
-                        if(config.HORSES.get(key).equalsIgnoreCase(pName)) {
-                            if(count == target) {
-                                horseID.add(UUID.fromString(key));
-                                break;
-                            }
+                        if(config.HORSES.get(key).getOwner().equalsIgnoreCase(pName)) {
                             count++;
-                        }
-                    }
+                            LockedHorse lhorse = config.HORSES.get(key);
+                            Horse horse = getHorse(lhorse.getLocation(this), UUID.fromString(key));
+                            if(horse != null) {
+                                config.HORSES.put(key, lhorse.updateHorse(horse));
+                                if (!horse.getLocation().getWorld().equals(((Player)sender).getWorld())) {
+                                    sender.sendMessage(ChatColor.GRAY + "Cannot teleport horses across worlds. Enter world \"" +
+                                        lhorse.getWorld() + "\" to teleport this horse.");
+                                    return true;
+                                }
+                                if(horse.getPassenger() == null) {
+                                    ((Player)sender).playSound(((Player)sender).getLocation(), Sound.ENDERMAN_TELEPORT, 1f , 1f);
+                                    sender.sendMessage(ChatColor.GRAY + lhorse.getName() + " " + lhorse.getAppearance() +
+                                        " has been teleported to your location!");
+                                    horse.teleport(((Player)sender).getLocation());
+                                    
+                                } else {
+                                    sender.sendMessage(ChatColor.GRAY + lhorse.getName() + " " + lhorse.getAppearance() +
+                                        " is being ridden by " + ((Player)horse.getPassenger()).getName() + " and can't be teleported.");
+                                }
 
-                    if(horseID.size() > 0) {
-                        Player player = (Player)sender;
-                        List<Horse> horses = getHorses(horseID);
-                        Horse horse = horses.get(0);
-                        if(horse.getPassenger() == null) {
-                            horse.teleport(player);
-                            player.playSound(player.getLocation(), Sound.ENDERMAN_TELEPORT, 1f , 1f);
-                            player.sendMessage(ChatColor.GRAY +
-                                (horse.getCustomName() != null ? horse.getCustomName() : horse.getVariant().toString()) +
-                                " has been teleported to your location!");
-                        } else {
-                            player.sendMessage(ChatColor.GRAY +
-                                (horse.getCustomName() != null ? horse.getCustomName() : horse.getVariant().toString()) +
-                                " is being ridden by " + ((Player)horse.getPassenger()).getName());
+                            } else {
+                                sender.sendMessage(ChatColor.GRAY + "That horse failed to load, please try again.");
+                                getLogger().info("Failed to load horse " + key + " from chunk at location " +
+                                    lhorse.getLocation() + " for player " + lhorse.getOwner() + ", cancelling teleport.");
+                            }
+                            return true;
                         }
-                    } else {
-                        sender.sendMessage(ChatColor.GRAY + "No horse found by that ID.");
                     }
+                    
+                    sender.sendMessage(ChatColor.GRAY + "No horse found by that ID.");
                 } else {
                     return false;
                 }
@@ -276,31 +263,30 @@ public class CobraCorral extends JavaPlugin {
     }
     
     /**
-     * Function iterates through each world's Horse entities and attempts to match the entity UUIDs
-     * supplied by the parameter 'id'. It returns a list of Horse entity references that match.
+     * Function to locate a horse in an unloaded chunk and return the horse entity.
      */
-    public List<Horse> getHorses(List<UUID> ids) {
-        List<Horse> horses = new ArrayList<>();
-        
-        for(World world : getServer().getWorlds()) {
-            for(Entity horse : world.getEntitiesByClasses(Horse.class)) {
-                for(UUID id : ids) {
-                    if(horse.getUniqueId().equals(id)) {
-                        horses.add((Horse)horse);
+    public Horse getHorse(Location horseLoc, UUID id) {
+        Chunk toLoad = horseLoc.getChunk();
+        Horse horse = null;
+        if(!toLoad.isLoaded()) {
+            toLoad.load();
+        }
+        for(Entity entity : toLoad.getEntities()) {
+            if(entity instanceof Horse) {
+                if(entity.getUniqueId().equals(id)) {
+                    horse = (Horse)entity;
+                }
+            }
+        }
+        if(horse == null) {
+            for(World world : getServer().getWorlds()) {
+                for(Entity entity : world.getEntitiesByClass(Horse.class)) {
+                    if(entity.getUniqueId().equals(id)) {
+                        horse = (Horse)entity;
                     }
                 }
             }
         }
-        
-        return horses;
-    }
-    
-    /**
-     * Function to locate a horse in an unloaded chunk and return the horse entity.
-     */
-    public Horse getHorse(LockedHorse lhorse) {
-        Horse horse;
-        
         return horse;
     }
     
