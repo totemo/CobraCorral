@@ -11,6 +11,7 @@ import org.bukkit.Sound;
 import org.bukkit.World;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
+import org.bukkit.configuration.serialization.ConfigurationSerialization;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Horse;
 import org.bukkit.entity.Player;
@@ -37,6 +38,7 @@ public class CobraCorral extends JavaPlugin {
     
     public void onEnable() {
         getLogger().info("version " + getDescription().getVersion() + " has begun loading...");
+        ConfigurationSerialization.registerClass(LockedHorse.class);
         File configFile = new File(getDataFolder(), "config.yml");
         if(!configFile.exists()) {
             getConfig().options().copyDefaults(true);
@@ -216,32 +218,34 @@ public class CobraCorral extends JavaPlugin {
                     for(String key : config.HORSES.keySet()) {
                         if(config.HORSES.get(key).getOwner().equalsIgnoreCase(pName)) {
                             count++;
-                            LockedHorse lhorse = config.HORSES.get(key);
-                            Horse horse = getHorse(lhorse.getLocation(this), UUID.fromString(key));
-                            if(horse != null) {
-                                config.HORSES.put(key, lhorse.updateHorse(horse));
-                                if (!horse.getLocation().getWorld().equals(((Player)sender).getWorld())) {
-                                    sender.sendMessage(ChatColor.GRAY + "Cannot teleport horses across worlds. Enter world \"" +
-                                        lhorse.getWorld() + "\" to teleport this horse.");
-                                    return true;
-                                }
-                                if(horse.getPassenger() == null) {
-                                    ((Player)sender).playSound(((Player)sender).getLocation(), Sound.ENDERMAN_TELEPORT, 1f , 1f);
-                                    sender.sendMessage(ChatColor.GRAY + lhorse.getName() + " " + lhorse.getAppearance() +
-                                        " has been teleported to your location!");
-                                    horse.teleport(((Player)sender).getLocation());
-                                    
-                                } else {
-                                    sender.sendMessage(ChatColor.GRAY + lhorse.getName() + " " + lhorse.getAppearance() +
-                                        " is being ridden by " + ((Player)horse.getPassenger()).getName() + " and can't be teleported.");
-                                }
+                            if(count == target) {
+                                LockedHorse lhorse = config.HORSES.get(key);
+                                Horse horse = getHorse(lhorse.getLocation(this), UUID.fromString(key));
+                                if(horse != null) {
+                                    config.HORSES.put(key, lhorse.updateHorse(horse));
+                                    if (!horse.getLocation().getWorld().equals(((Player)sender).getWorld())) {
+                                        sender.sendMessage(ChatColor.GRAY + "Cannot teleport horses across worlds. Enter world \"" +
+                                            lhorse.getWorld() + "\" to teleport this horse.");
+                                        return true;
+                                    }
+                                    if(horse.getPassenger() == null) {
+                                        ((Player)sender).playSound(((Player)sender).getLocation(), Sound.ENDERMAN_TELEPORT, 1f , 1f);
+                                        sender.sendMessage(ChatColor.GRAY + lhorse.getName() + " " + lhorse.getAppearance() +
+                                            " has been teleported to your location!");
+                                        horse.teleport(((Player)sender).getLocation());
 
-                            } else {
-                                sender.sendMessage(ChatColor.GRAY + "That horse failed to load, please try again.");
-                                getLogger().info("Failed to load horse " + key + " from chunk at location " +
-                                    lhorse.getLocation() + " for player " + lhorse.getOwner() + ", cancelling teleport.");
+                                    } else {
+                                        sender.sendMessage(ChatColor.GRAY + lhorse.getName() + " " + lhorse.getAppearance() +
+                                            " is being ridden by " + ((Player)horse.getPassenger()).getName() + " and can't be teleported.");
+                                    }
+
+                                } else {
+                                    sender.sendMessage(ChatColor.GRAY + "That horse failed to load, please try again.");
+                                    getLogger().info("Failed to load horse " + key + " from chunk at location " +
+                                        lhorse.getLocation() + " for player " + lhorse.getOwner() + ", cancelling teleport.");
+                                }
+                                return true;
                             }
-                            return true;
                         }
                     }
                     

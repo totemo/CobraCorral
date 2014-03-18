@@ -149,6 +149,9 @@ public class CorralListener implements Listener {
                     plugin.lockHorse(entity.getUniqueId(), (Horse)entity);
                     owner.playSound(owner.getLocation(), Sound.CLICK, 1f, 1f);
                     owner.sendMessage(ChatColor.GRAY + "This horse has been locked.");
+                    plugin.getLogger().info(owner.getName() + " tamed and autolocked " + (((Horse)entity).getCustomName() != null ?
+                        ((Horse)entity).getCustomName() : ((Horse)entity).getVariant().toString()) + " with UUID " +
+                        ((Horse)entity).getUniqueId().toString());
                 }
             }
         }
