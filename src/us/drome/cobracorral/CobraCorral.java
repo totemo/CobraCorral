@@ -30,6 +30,7 @@ public class CobraCorral extends JavaPlugin {
     public void onDisable() {
         getLogger().info("version " + getDescription().getVersion() + " has begun unloading...");
         config.save();
+        getLogger().info(" has saved " + config.HORSES.size() + " locked horses.");
         getLogger().info("version " + getDescription().getVersion() + " has finished unloading.");
     }
     
@@ -40,9 +41,8 @@ public class CobraCorral extends JavaPlugin {
             getConfig().options().copyDefaults(true);
             saveConfig();
         }
-        
         config.load();
-        
+        getLogger().info(" has loaded " + config.HORSES.size() + " locked horses.");
         getServer().getPluginManager().registerEvents(listener, this);
         getLogger().info("version " + getDescription().getVersion() + " has finished loading.");
     }
@@ -85,17 +85,31 @@ public class CobraCorral extends JavaPlugin {
                             player = args[0];
                         }
                     }
-                    List<UUID> horseID = new ArrayList<>();
+                    List<UUID> horseIDs = new ArrayList<>();
                     List<String> response = new ArrayList<>();
 
                     for(String key : config.HORSES.keySet()) {
-                        if(config.HORSES.get(key).equalsIgnoreCase(player)) {
-                            horseID.add(UUID.fromString(key));
+                        if(config.HORSES.get(key).getOwner().equalsIgnoreCase(player)) {
+                            horseIDs.add(UUID.fromString(key));
                         }
                     }
+                    
+                    if(!horseIDs.isEmpty()) {
+                        List<Horse> horses = getHorses(horseIDs);
+                        if(horses.isEmpty()) {
+                            for(UUID key : horseIDs) {
+                                LockedHorse temp = config.HORSES.get(key.toString());
+                                temp = temp.updateHorse(getHorse(temp.getLocation(this)));
+                                config.HORSES.put(key.toString(), temp);
+                            }
+                        }
+                    } else {
+                        sender.sendMessage(ChatColor.GRAY + "There are no horses locked by " +
+                            (player.equalsIgnoreCase(sender.getName()) ? "you" : player) + ".");
+                    }
 
-                    if(horseID.size() > 0) {
-                        List<Horse> horses = getHorses(horseID);
+                    if(horseIDs.size() > 0) {
+                        List<Horse> horses = getHorses(horseIDs);
                         response.add(ChatColor.GRAY + "Horses locked by " +
                             (player.equalsIgnoreCase(sender.getName()) ? "you" : player) + ":");
                         
@@ -281,31 +295,40 @@ public class CobraCorral extends JavaPlugin {
         return horses;
     }
     
+    /**
+     * Function to locate a horse in an unloaded chunk and return the horse entity.
+     */
+    public Horse getHorse(LockedHorse lhorse) {
+        Horse horse;
+        
+        return horse;
+    }
+    
     public boolean isHorseLocked(Horse horse) {
-        for(String key : config.HORSES.keySet()) {
-           if(horse.getUniqueId().toString().equals(key))
-               return true;
+        if(config.HORSES.containsKey(horse.getUniqueId().toString())) {
+            return true;
+        } else {
+            return false;
         }
-        return false;
     }
     
     public boolean maxHorsesLocked(String player) {
         int count = 0;
         
         for(String key : config.HORSES.keySet()) {
-            if(config.HORSES.get(key).equalsIgnoreCase(player)) {
+            if(config.HORSES.get(key).getOwner().equalsIgnoreCase(player)) {
                 count++;
             }
         }
         
-        if(count > 1)
+        if(count >= config.MAX_HORSES) //check for > just in case.
             return true;
         else
             return false;
     }
     
-    public void lockHorse(UUID id, String player) {
-        config.HORSES.put(id.toString(), player);
+    public void lockHorse(UUID id, Horse horse) {
+        config.HORSES.put(id.toString(), new LockedHorse(horse));
     }
     
     public void unlockHorse(UUID id) {

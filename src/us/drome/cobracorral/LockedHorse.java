@@ -21,6 +21,14 @@ public class LockedHorse {
         location = horseLoc.getBlockX() + ":" + horseLoc.getBlockY() + ":" + horseLoc.getBlockZ() + ":" + horseLoc.getWorld();
     }
     
+    public LockedHorse updateHorse(Horse horse) {
+        name = (horse.getCustomName() != null ? horse.getCustomName() : "NoName");
+        armor = (horse.getInventory().getArmor() != null ? horse.getInventory().getArmor().getType().toString() : "No Armor");
+        Location horseLoc = horse.getLocation();
+        location = horseLoc.getBlockX() + ":" + horseLoc.getBlockY() + ":" + horseLoc.getBlockZ() + ":" + horseLoc.getWorld();
+        return this;
+    }
+    
     public String getOwner() {
         return owner;
     }
