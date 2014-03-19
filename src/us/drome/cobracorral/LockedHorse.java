@@ -23,6 +23,14 @@ public class LockedHorse implements ConfigurationSerializable {
         Location horseLoc = horse.getLocation();
         location = horseLoc.getBlockX() + ":" + horseLoc.getBlockY() + ":" + horseLoc.getBlockZ() + ":" + horseLoc.getWorld().getName();
     }
+        
+    public LockedHorse(Map<String, Object> map) {
+        owner = (String)map.get("owner");
+        name = (String)map.get("name");
+        appearance = (String)map.get("appearance");
+        armor = (String)map.get("armor");
+        location = (String)map.get("location");
+    }
     
     public LockedHorse updateHorse(Horse horse) {
         name = (horse.getCustomName() != null ? horse.getCustomName() : "NoName");
@@ -86,5 +94,13 @@ public class LockedHorse implements ConfigurationSerializable {
         map.put("armor", armor);
         map.put("location", location);
         return map;
+    }
+    
+    public LockedHorse valueOf(Map<String, Object> map) {
+        return new LockedHorse(map);
+    }
+    
+    public LockedHorse deserialize(Map<String, Object> map) {
+        return new LockedHorse(map);
     }
 }
