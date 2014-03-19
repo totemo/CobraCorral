@@ -14,11 +14,12 @@ public class LockedHorse implements ConfigurationSerializable {
     private String armor;
     private String location;
     
-    public LockedHorse(Horse horse) {
-        owner = horse.getOwner().getName();
+    public LockedHorse(Horse horse, String tamer) {
+        owner = tamer;
         name = (horse.getCustomName() != null ? horse.getCustomName() : "NoName");
         appearance = ((horse.getVariant() == Horse.Variant.HORSE) ? horse.getColor().toString() +
-            " " + horse.getStyle().toString() : horse.getVariant().toString());
+            " " + (horse.getStyle().toString().equalsIgnoreCase("none") ? "" :
+            horse.getStyle().toString()) : horse.getVariant().toString());
         armor = (horse.getInventory().getArmor() != null ? horse.getInventory().getArmor().getType().toString() : "No Armor");
         Location horseLoc = horse.getLocation();
         location = horseLoc.getBlockX() + ":" + horseLoc.getBlockY() + ":" + horseLoc.getBlockZ() + ":" + horseLoc.getWorld().getName();
@@ -38,14 +39,6 @@ public class LockedHorse implements ConfigurationSerializable {
         Location horseLoc = horse.getLocation();
         location = horseLoc.getBlockX() + ":" + horseLoc.getBlockY() + ":" + horseLoc.getBlockZ() + ":" + horseLoc.getWorld().getName();
         return this;
-    }
-    
-    public LockedHorse(Map<String, Object> map) {
-        owner = (String)map.get("owner");
-        name = (String)map.get("name");
-        appearance = (String)map.get("appearance");
-        armor = (String)map.get("armor");
-        location = (String)map.get("location");
     }
     
     public String getOwner() {

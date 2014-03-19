@@ -49,30 +49,34 @@ commands:
         description: Lock a horse so only the owner can ride/harm it.
         permission: ccorral.lock
         usage: /corral Right click on a horse you own.
-        aliases: ['horse-lock']
+        aliases: ['horse-lock','hlock']
     uncorral:
         description: Unlock a horse that you own allowing others to ride/harm it.
         permission: ccorral.lock
         usage: /uncorral Right click on a locked horse you own.
-        aliases: ['horse-unlock']
+        aliases: ['horse-unlock','hunlock']
     testdrive:
         description: Temporarily unlock a horse allowing someone to ride it.
         permission: ccorral.lock
         usage: /testdrive Right click on a locked horse you own.
-        aliases: ['horse-test']
+        aliases: ['horse-test','htest']
     horse-list:
         description: List all the horses owned by a player
         permission: ccorral.list
         usage: /horse-list [<player>]
+        aliases: ['hlist']
     horse-gps:
         description: Locate a horse that you own.
         permission: ccorral.gps
         usage: /horse-gps [<player>] <horse#>
+        aliases: ['hgps']
     horse-tp:
         description: Teleport a horse to your location
         permission: ccorral.tp
         usage: /horse-tp [<player>] <horse#>
+        aliases: ['htp']
     horse-info:
         description: List information for a specified horse.
         permission: ccorral.info
         usage: /horse-info Right click on a horse.
+        aliases: ['hinfo']

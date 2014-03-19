@@ -84,9 +84,7 @@ public class CobraCorral extends JavaPlugin {
                 if(sender instanceof Player) {
                     String player = sender.getName();
                     if(args.length > 0 && (sender.hasPermission("ccorral.list-all") || sender.hasPermission("ccorral.admin"))) {
-                        if(getServer().getOfflinePlayer(args[0]).hasPlayedBefore()) {
-                            player = args[0];
-                        }
+                        player = args[0];
                     }
                     List<UUID> horseIDs = new ArrayList<>();
                     List<String> response = new ArrayList<>();
@@ -152,7 +150,7 @@ public class CobraCorral extends JavaPlugin {
                             try {
                                 target = Integer.parseInt(args[0]);
                             } catch (NumberFormatException e) {
-                                sender.sendMessage(ChatColor.GRAY + "Horse ID provided: " + args[1] + ", is not a valid integer.");
+                                sender.sendMessage(ChatColor.GRAY + "Horse ID provided: " + args[0] + ", is not a valid integer.");
                                 return false;
                             }
                         }
@@ -318,8 +316,8 @@ public class CobraCorral extends JavaPlugin {
             return false;
     }
     
-    public void lockHorse(UUID id, Horse horse) {
-        config.HORSES.put(id.toString(), new LockedHorse(horse));
+    public void lockHorse(UUID id, Horse horse, String tamer) {
+        config.HORSES.put(id.toString(), new LockedHorse(horse, tamer));
     }
     
     public void unlockHorse(UUID id) {
@@ -331,29 +329,33 @@ public class CobraCorral extends JavaPlugin {
             " Commands" + ChatColor.GRAY + "=======");
         if(sender.hasPermission("ccorral.lock")) {
             sender.sendMessage(ChatColor.WHITE + "/corral" + ChatColor.GRAY + " | Used to lock a horse you have tamed.");
-            sender.sendMessage(ChatColor.WHITE + "    aliases:" + ChatColor.GRAY + " /horse-lock");
+            sender.sendMessage(ChatColor.WHITE + "    aliases:" + ChatColor.GRAY + " /horse-lock, /hlock");
             sender.sendMessage(ChatColor.WHITE + "/uncorral" + ChatColor.GRAY + " | Used to unlock a horse you have tamed.");
-            sender.sendMessage(ChatColor.WHITE + "    aliases:" + ChatColor.GRAY + " /horse-unlock");
+            sender.sendMessage(ChatColor.WHITE + "    aliases:" + ChatColor.GRAY + " /horse-unlock, /hunlock");
             sender.sendMessage(ChatColor.WHITE + "/testdrive" + ChatColor.GRAY + " | Temporarily allow others to ride a locked horse.");
-            sender.sendMessage(ChatColor.WHITE + "    aliases:" + ChatColor.GRAY + " /horse-test");
+            sender.sendMessage(ChatColor.WHITE + "    aliases:" + ChatColor.GRAY + " /horse-test, /htest");
         }
         if(sender.hasPermission("ccorral.list")) {
             sender.sendMessage(ChatColor.WHITE + "/horse-list" + ChatColor.GRAY + " | List all horses you have locked.");
+            sender.sendMessage(ChatColor.WHITE + "    aliases:" + ChatColor.GRAY + " /hlist");
         }
         if(sender.hasPermission("ccorral.list-all")) {
             sender.sendMessage(ChatColor.WHITE + "/horse-list <player>" + ChatColor.GRAY + " | List horses owned by player.");
         }
         if(sender.hasPermission("ccorral.gps")) {
             sender.sendMessage(ChatColor.WHITE + "/horse-gps <horseID>" + ChatColor.GRAY + " | Get the location of a specified horse.");
+            sender.sendMessage(ChatColor.WHITE + "    aliases:" + ChatColor.GRAY + " /hgps");
         }
         if(sender.hasPermission("ccorral.gps-all")) {
             sender.sendMessage(ChatColor.WHITE + "/horse-gps <player> <horseID>" + ChatColor.GRAY + " | Locate a player's horse.");
         }
         if(sender.hasPermission("ccorral.tp")) {
             sender.sendMessage(ChatColor.WHITE + "/horse-tp <player> <horseID>" + ChatColor.GRAY + " | Telelport a horse to you.");
+            sender.sendMessage(ChatColor.WHITE + "    aliases:" + ChatColor.GRAY + " /htp");
         }
         if(sender.hasPermission("ccorral.info")) {
             sender.sendMessage(ChatColor.WHITE + "/horse-info" + ChatColor.GRAY + " | Display owner and lock status of a horse.");
+            sender.sendMessage(ChatColor.WHITE + "    aliases:" + ChatColor.GRAY + " /hinfo");
         }
     }
 }
