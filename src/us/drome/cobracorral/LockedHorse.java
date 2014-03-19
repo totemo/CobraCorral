@@ -40,6 +40,14 @@ public class LockedHorse implements ConfigurationSerializable {
         return this;
     }
     
+    public LockedHorse(Map<String, Object> map) {
+        owner = (String)map.get("owner");
+        name = (String)map.get("name");
+        appearance = (String)map.get("appearance");
+        armor = (String)map.get("armor");
+        location = (String)map.get("location");
+    }
+    
     public String getOwner() {
         return owner;
     }
