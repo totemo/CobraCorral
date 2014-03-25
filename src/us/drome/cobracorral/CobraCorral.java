@@ -57,7 +57,7 @@ public class CobraCorral extends JavaPlugin {
                 if(args.length > 0) {
                     if(args[0].equalsIgnoreCase("reload") && sender.hasPermission("ccorral.admin")) {
                         config.reload();
-                        sender.sendMessage(ChatColor.LIGHT_PURPLE + "[CorabCorral] Config Reloaded");
+                        sender.sendMessage(ChatColor.LIGHT_PURPLE + "[CobraCorral] Config Reloaded");
                     } else
                         helpDisplay(sender);
                 } else
