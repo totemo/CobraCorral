@@ -54,7 +54,14 @@ public class CobraCorral extends JavaPlugin {
     public boolean onCommand(CommandSender sender, Command cmd, String alias, String[] args) {
         switch(cmd.getName().toLowerCase()) {
             case "ccorral":
-                helpDisplay(sender);
+                if(args.length > 0) {
+                    if(args[0].equalsIgnoreCase("reload") && sender.hasPermission("ccorral.admin")) {
+                        config.reload();
+                        sender.sendMessage(ChatColor.LIGHT_PURPLE + "[CorabCorral] Config Reloaded");
+                    } else
+                        helpDisplay(sender);
+                } else
+                    helpDisplay(sender);
                 break;
             case "corral":
                 if(sender instanceof Player) {
