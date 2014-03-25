@@ -1,7 +1,9 @@
 package us.drome.cobracorral;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.UUID;
 import org.bukkit.ChatColor;
 import org.bukkit.Sound;
 import org.bukkit.entity.Entity;
@@ -13,12 +15,16 @@ import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.entity.EntityTameEvent;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
+import org.bukkit.event.vehicle.VehicleExitEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.world.ChunkUnloadEvent;
 import org.bukkit.metadata.FixedMetadataValue;
+import org.bukkit.scheduler.BukkitRunnable;
 
 public class CorralListener implements Listener {
     private final CobraCorral plugin;
+    
+    private List<UUID> onCooldown = new ArrayList<>();
     
     CorralListener(CobraCorral instance) {
         plugin = instance;
@@ -29,6 +35,13 @@ public class CorralListener implements Listener {
         Player player = event.getPlayer();
         if(event.getRightClicked() instanceof Horse) {
             Horse horse = (Horse)event.getRightClicked();
+            
+            if(horse.getOwner() == null && plugin.isHorseLocked(horse)) {
+                plugin.unlockHorse(horse.getUniqueId());
+                plugin.getLogger().info("Auto-unlocked " + (horse.getCustomName() != null ?
+                    horse.getCustomName() : horse.getVariant().toString()) + " with UUID " + horse.getUniqueId().toString() +
+                        " due to the horse having no owner.");
+            }
             
             if(player.hasMetadata(CobraCorral.HORSE_INFO)) {
                 String owner = (horse.getOwner().getName() != null ? horse.getOwner().getName() : "None");
@@ -148,7 +161,7 @@ public class CorralListener implements Listener {
             if(entity instanceof Horse && owner instanceof Player) {
                 if(plugin.maxHorsesLocked(owner.getName())){
                     owner.sendMessage(ChatColor.GRAY + "You cannot lock any more horses.");
-                } else {
+                } else if (!plugin.isHorseLocked((Horse)entity)) {
                     plugin.lockHorse(entity.getUniqueId(), (Horse)entity, owner.getName());
                     owner.playSound(owner.getLocation(), Sound.CLICK, 1f, 1f);
                     owner.sendMessage(ChatColor.GRAY + "This horse has been locked.");
@@ -165,7 +178,7 @@ public class CorralListener implements Listener {
         if(event.getEntity() instanceof Horse && plugin.config.IMMORTALITY) {
             Horse horse = (Horse)event.getEntity();
             if(plugin.isHorseLocked(horse)) {
-                if(horse.getPassenger() == null) {
+                if(horse.getPassenger() == null && !onCooldown.contains(horse.getUniqueId())) {
                     event.setCancelled(true);                    
                 }
             }
@@ -195,6 +208,23 @@ public class CorralListener implements Listener {
                     }
                 }
                 plugin.config.HORSES.remove(horse.getUniqueId().toString());
+            }
+        }
+    }
+    
+    @EventHandler
+    public void onVehicleExit(VehicleExitEvent event) {
+        if(event.getVehicle() instanceof Horse) {
+            Horse horse = (Horse)event.getVehicle();
+            final UUID horseID = horse.getUniqueId();
+            if(plugin.isHorseLocked(horse) && plugin.config.IMMORTAL_COOLDOWN) {
+                onCooldown.add(horseID);
+                new BukkitRunnable() {
+                    @Override
+                    public void run() {
+                        onCooldown.remove(horseID);
+                    }
+                }.runTaskLaterAsynchronously(plugin, (plugin.config.COOLDOWN_TIME * 20));
             }
         }
     }
