@@ -12,8 +12,8 @@ public class Configuration {
     public int COOLDOWN_TIME;
     public Map<String, LockedHorse> HORSES;
     
-    public Configuration(CobraCorral instance) {
-        plugin = instance;
+    public Configuration(CobraCorral plugin) {
+        this.plugin = plugin;
     }
     
     public void save() {

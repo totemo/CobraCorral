@@ -5,14 +5,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import org.bukkit.ChatColor;
-import org.bukkit.Chunk;
-import org.bukkit.Location;
 import org.bukkit.Sound;
-import org.bukkit.World;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.serialization.ConfigurationSerialization;
-import org.bukkit.entity.Entity;
 import org.bukkit.entity.Horse;
 import org.bukkit.entity.Player;
 import org.bukkit.metadata.FixedMetadataValue;
@@ -21,13 +17,14 @@ import org.bukkit.util.Vector;
 
 public class CobraCorral extends JavaPlugin {
     public final Configuration config = new Configuration(this);
-    private CorralListener listener = new CorralListener(this);
+    public final Utils utils = new Utils(this);
     
     //Horse metadata keys.
     public static final String HORSE_TEST_DRIVE = "CobraCorral.test_drive";
     public static final String HORSE_INFO = "CobraCorral.info";
     public static final String HORSE_LOCK = "CobraCorral.lock";
     public static final String HORSE_UNLOCK = "CobraCorral.unlock";
+    public static final String HORSE_FREE = "CobraCorral.free";
     
     public void onDisable() {
         getLogger().info("version " + getDescription().getVersion() + " has begun unloading...");
@@ -38,6 +35,7 @@ public class CobraCorral extends JavaPlugin {
     
     public void onEnable() {
         getLogger().info("version " + getDescription().getVersion() + " has begun loading...");
+        (new CorralListener(this)).registerEvents();
         ConfigurationSerialization.registerClass(LockedHorse.class);
         File configFile = new File(getDataFolder(), "config.yml");
         if(!configFile.exists()) {
@@ -46,7 +44,6 @@ public class CobraCorral extends JavaPlugin {
         }
         config.load();
         getLogger().info(" has loaded " + config.HORSES.size() + " locked horses.");
-        getServer().getPluginManager().registerEvents(listener, this);
         getLogger().info("version " + getDescription().getVersion() + " has finished loading.");
     }
     
@@ -59,9 +56,9 @@ public class CobraCorral extends JavaPlugin {
                         config.reload();
                         sender.sendMessage(ChatColor.LIGHT_PURPLE + "[CobraCorral] Config Reloaded");
                     } else
-                        helpDisplay(sender);
+                        utils.helpDisplay(sender);
                 } else
-                    helpDisplay(sender);
+                    utils.helpDisplay(sender);
                 break;
             case "corral":
                 if(sender instanceof Player) {
@@ -87,6 +84,14 @@ public class CobraCorral extends JavaPlugin {
                     sender.sendMessage("That command can only be ran by a Player.");
                 }
                 break;
+            case "horse-free":
+                if(sender instanceof Player) {
+                    ((Player)sender).setMetadata(HORSE_FREE, new FixedMetadataValue(this, null));
+                    sender.sendMessage(ChatColor.GRAY + "Right click on a Horse that you own.");
+                } else {
+                    sender.sendMessage("That command can only be ran by a Player.");
+                }
+                break;
             case "horse-list":
                 if(sender instanceof Player) {
                     String player = sender.getName();
@@ -101,7 +106,7 @@ public class CobraCorral extends JavaPlugin {
                         if(config.HORSES.get(key).getOwner().equalsIgnoreCase(player)) {
                             count++;
                             LockedHorse lhorse = config.HORSES.get(key);
-                            Horse horse = getHorse(lhorse.getLocation(this), UUID.fromString(key));
+                            Horse horse = utils.getHorse(lhorse.getLocation(this), UUID.fromString(key));
                             if(horse != null) {
                                 config.HORSES.put(key, lhorse.updateHorse(horse));
                             } else {
@@ -167,7 +172,7 @@ public class CobraCorral extends JavaPlugin {
                                 count++;
                                 if(count == target) {
                                     LockedHorse lhorse = config.HORSES.get(key);
-                                    Horse horse = getHorse(lhorse.getLocation(this), UUID.fromString(key));
+                                    Horse horse = utils.getHorse(lhorse.getLocation(this), UUID.fromString(key));
                                     if(horse != null) {
                                         config.HORSES.put(key, lhorse.updateHorse(horse));
                                     } else {
@@ -225,7 +230,7 @@ public class CobraCorral extends JavaPlugin {
                             count++;
                             if(count == target) {
                                 LockedHorse lhorse = config.HORSES.get(key);
-                                Horse horse = getHorse(lhorse.getLocation(this), UUID.fromString(key));
+                                Horse horse = utils.getHorse(lhorse.getLocation(this), UUID.fromString(key));
                                 if(horse != null) {
                                     config.HORSES.put(key, lhorse.updateHorse(horse));
                                     if (!horse.getLocation().getWorld().equals(((Player)sender).getWorld())) {
@@ -269,100 +274,5 @@ public class CobraCorral extends JavaPlugin {
                 break;
         }
         return true;
-    }
-    
-    /**
-     * Function to locate a horse in an unloaded chunk and return the horse entity.
-     */
-    public Horse getHorse(Location horseLoc, UUID id) {
-        Chunk toLoad = horseLoc.getChunk();
-        Horse horse = null;
-        if(!toLoad.isLoaded()) {
-            toLoad.load();
-        }
-        for(Entity entity : toLoad.getEntities()) {
-            if(entity instanceof Horse) {
-                if(entity.getUniqueId().equals(id)) {
-                    horse = (Horse)entity;
-                }
-            }
-        }
-        if(horse == null) {
-            for(World world : getServer().getWorlds()) {
-                for(Entity entity : world.getEntitiesByClass(Horse.class)) {
-                    if(entity.getUniqueId().equals(id)) {
-                        horse = (Horse)entity;
-                    }
-                }
-            }
-        }
-        return horse;
-    }
-    
-    public boolean isHorseLocked(Horse horse) {
-        if(config.HORSES.containsKey(horse.getUniqueId().toString())) {
-            return true;
-        } else {
-            return false;
-        }
-    }
-    
-    public boolean maxHorsesLocked(String player) {
-        if(config.MAX_HORSES == 0) {
-            return false;
-        }
-        int count = 0;
-        for(String key : config.HORSES.keySet()) {
-            if(config.HORSES.get(key).getOwner().equalsIgnoreCase(player)) {
-                count++;
-            }
-        }
-        if(count >= config.MAX_HORSES) //check for > just in case.
-            return true;
-        else
-            return false;
-    }
-    
-    public void lockHorse(UUID id, Horse horse, String tamer) {
-        config.HORSES.put(id.toString(), new LockedHorse(horse, tamer));
-    }
-    
-    public void unlockHorse(UUID id) {
-        config.HORSES.remove(id.toString());
-    }
-    
-    public void helpDisplay(CommandSender sender) {
-        sender.sendMessage(ChatColor.GRAY + "=======" + ChatColor.WHITE + "CobraCorral v" + getDescription().getVersion() +
-            " Commands" + ChatColor.GRAY + "=======");
-        if(sender.hasPermission("ccorral.lock")) {
-            sender.sendMessage(ChatColor.WHITE + "/corral" + ChatColor.GRAY + " | Used to lock a horse you have tamed.");
-            sender.sendMessage(ChatColor.WHITE + "    aliases:" + ChatColor.GRAY + " /horse-lock, /hlock");
-            sender.sendMessage(ChatColor.WHITE + "/uncorral" + ChatColor.GRAY + " | Used to unlock a horse you have tamed.");
-            sender.sendMessage(ChatColor.WHITE + "    aliases:" + ChatColor.GRAY + " /horse-unlock, /hunlock");
-            sender.sendMessage(ChatColor.WHITE + "/testdrive" + ChatColor.GRAY + " | Temporarily allow others to ride a locked horse.");
-            sender.sendMessage(ChatColor.WHITE + "    aliases:" + ChatColor.GRAY + " /horse-test, /htest");
-        }
-        if(sender.hasPermission("ccorral.list")) {
-            sender.sendMessage(ChatColor.WHITE + "/horse-list" + ChatColor.GRAY + " | List all horses you have locked.");
-            sender.sendMessage(ChatColor.WHITE + "    aliases:" + ChatColor.GRAY + " /hlist");
-        }
-        if(sender.hasPermission("ccorral.list-all")) {
-            sender.sendMessage(ChatColor.WHITE + "/horse-list <player>" + ChatColor.GRAY + " | List horses owned by player.");
-        }
-        if(sender.hasPermission("ccorral.gps")) {
-            sender.sendMessage(ChatColor.WHITE + "/horse-gps <horseID>" + ChatColor.GRAY + " | Get the location of a specified horse.");
-            sender.sendMessage(ChatColor.WHITE + "    aliases:" + ChatColor.GRAY + " /hgps");
-        }
-        if(sender.hasPermission("ccorral.gps-all")) {
-            sender.sendMessage(ChatColor.WHITE + "/horse-gps <player> <horseID>" + ChatColor.GRAY + " | Locate a player's horse.");
-        }
-        if(sender.hasPermission("ccorral.tp")) {
-            sender.sendMessage(ChatColor.WHITE + "/horse-tp <player> <horseID>" + ChatColor.GRAY + " | Telelport a horse to you.");
-            sender.sendMessage(ChatColor.WHITE + "    aliases:" + ChatColor.GRAY + " /htp");
-        }
-        if(sender.hasPermission("ccorral.info")) {
-            sender.sendMessage(ChatColor.WHITE + "/horse-info" + ChatColor.GRAY + " | Display owner and lock status of a horse.");
-            sender.sendMessage(ChatColor.WHITE + "    aliases:" + ChatColor.GRAY + " /hinfo");
-        }
     }
 }

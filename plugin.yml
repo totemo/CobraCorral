@@ -9,6 +9,7 @@ permissions:
         children:
             ccorral.help: true
             ccorral.lock: true
+            ccorral.free: true
             ccorral.list: true
             ccorral.list-all: true
             ccorral.gps: true
@@ -20,6 +21,9 @@ permissions:
         default: true
     ccorral.lock:
         description: Lock a Horse entity
+        default: true
+    ccorral.free:
+        description: Set free an owned horse
         default: true
     ccorral.list:
         description: List locked Horses
@@ -60,6 +64,11 @@ commands:
         permission: ccorral.lock
         usage: /testdrive Right click on a locked horse you own.
         aliases: ['horse-test','htest']
+    horse-free:
+        description: Release a horse from your ownership.
+        permission: ccorral.untame
+        usage: /horse-free Right click on a locked horse you own.
+        aliases: ['hfree']
     horse-list:
         description: List all the horses owned by a player
         permission: ccorral.list

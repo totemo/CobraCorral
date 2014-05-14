@@ -22,12 +22,20 @@ import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.scheduler.BukkitRunnable;
 
 public class CorralListener implements Listener {
-    private final CobraCorral plugin;
+    CobraCorral plugin;
+    Configuration config;
+    Utils utils;
     
     private List<UUID> onCooldown = new ArrayList<>();
     
-    CorralListener(CobraCorral instance) {
-        plugin = instance;
+    CorralListener(CobraCorral plugin) {
+        this.plugin = plugin;
+        config = plugin.config;
+        utils = plugin.utils;
+    }
+    
+    public void registerEvents() {
+        plugin.getServer().getPluginManager().registerEvents(this, plugin);
     }
     
     @EventHandler
@@ -36,8 +44,8 @@ public class CorralListener implements Listener {
         if(event.getRightClicked() instanceof Horse) {
             Horse horse = (Horse)event.getRightClicked();
             
-            if(horse.getOwner() == null && plugin.isHorseLocked(horse)) {
-                plugin.unlockHorse(horse.getUniqueId());
+            if(horse.getOwner() == null && utils.isHorseLocked(horse)) {
+                utils.unlockHorse(horse.getUniqueId());
                 plugin.getLogger().info("Auto-unlocked " + (horse.getCustomName() != null ?
                     horse.getCustomName() : horse.getVariant().toString()) + " with UUID " + horse.getUniqueId().toString() +
                         " due to the horse having no owner.");
@@ -45,7 +53,7 @@ public class CorralListener implements Listener {
             
             if(player.hasMetadata(CobraCorral.HORSE_INFO)) {
                 String owner = (horse.getOwner().getName() != null ? horse.getOwner().getName() : "None");
-                String status = (plugin.isHorseLocked(horse) ? "Locked" : "Not Locked");
+                String status = (utils.isHorseLocked(horse) ? "Locked" : "Not Locked");
                 status = (horse.hasMetadata(CobraCorral.HORSE_TEST_DRIVE) ? "Test Drive" : status);
                 String UUID = horse.getUniqueId().toString();
                 player.playSound(player.getLocation(), Sound.ORB_PICKUP, 1f, 1f);
@@ -56,9 +64,9 @@ public class CorralListener implements Listener {
             } else if (horse.isTamed()) {
                 if(player.hasMetadata(CobraCorral.HORSE_LOCK)) {
                     if(player.getName().equalsIgnoreCase(horse.getOwner().getName())) {
-                        if(!plugin.maxHorsesLocked(player.getName())) {
-                            if(!plugin.isHorseLocked(horse)) {
-                                plugin.lockHorse(horse.getUniqueId(), horse, player.getName());
+                        if(!utils.maxHorsesLocked(player.getName())) {
+                            if(!utils.isHorseLocked(horse)) {
+                                utils.lockHorse(horse.getUniqueId(), horse, player.getName());
                                 player.sendMessage(ChatColor.GRAY + (horse.getCustomName() != null ?
                                     horse.getCustomName() : horse.getVariant().toString()) + " has been locked.");
                                 player.playSound(player.getLocation(), Sound.CLICK, 1f, 1f);
@@ -80,7 +88,7 @@ public class CorralListener implements Listener {
                     event.setCancelled(true);
                 } else if(player.hasMetadata(CobraCorral.HORSE_TEST_DRIVE)) {
                     if(player.getName().equalsIgnoreCase(horse.getOwner().getName())) {
-                        if(plugin.isHorseLocked(horse)) {
+                        if(utils.isHorseLocked(horse)) {
                             if(horse.hasMetadata(CobraCorral.HORSE_TEST_DRIVE)) {
                                 horse.removeMetadata(CobraCorral.HORSE_TEST_DRIVE, plugin);
                                 player.sendMessage(ChatColor.GRAY + (horse.getCustomName() != null ?
@@ -117,8 +125,8 @@ public class CorralListener implements Listener {
                     event.setCancelled(true);
                 } else if(player.hasMetadata(CobraCorral.HORSE_UNLOCK)) {
                     if(player.getName().equalsIgnoreCase(horse.getOwner().getName()) || player.hasPermission("ccorral.admin")) {
-                        if(plugin.isHorseLocked(horse)) {
-                            plugin.unlockHorse(horse.getUniqueId());
+                        if(utils.isHorseLocked(horse)) {
+                            utils.unlockHorse(horse.getUniqueId());
                             player.sendMessage(ChatColor.GRAY + (horse.getCustomName() != null ?
                                 horse.getCustomName() : horse.getVariant().toString())+ " has been unlocked.");
                             player.playSound(player.getLocation(), Sound.CLICK, 1f, 1f);
@@ -137,7 +145,7 @@ public class CorralListener implements Listener {
                     }
                     clearMetaKeys(player);
                     event.setCancelled(true);
-                } else if (plugin.isHorseLocked(horse)) {
+                } else if (utils.isHorseLocked(horse)) {
                     if(!player.getName().equalsIgnoreCase(horse.getOwner().getName())) {
                         if(!horse.hasMetadata(CobraCorral.HORSE_TEST_DRIVE)){
                             event.setCancelled(true);
@@ -159,10 +167,10 @@ public class CorralListener implements Listener {
             Entity entity = event.getEntity();
             Player owner = (Player)event.getOwner();
             if(entity instanceof Horse && owner instanceof Player) {
-                if(plugin.maxHorsesLocked(owner.getName())){
+                if(utils.maxHorsesLocked(owner.getName())){
                     owner.sendMessage(ChatColor.GRAY + "You cannot lock any more horses.");
-                } else if (!plugin.isHorseLocked((Horse)entity)) {
-                    plugin.lockHorse(entity.getUniqueId(), (Horse)entity, owner.getName());
+                } else if (!utils.isHorseLocked((Horse)entity)) {
+                    utils.lockHorse(entity.getUniqueId(), (Horse)entity, owner.getName());
                     owner.playSound(owner.getLocation(), Sound.CLICK, 1f, 1f);
                     owner.sendMessage(ChatColor.GRAY + "This horse has been locked.");
                     plugin.getLogger().info(owner.getName() + " tamed and autolocked " + (((Horse)entity).getCustomName() != null ?
@@ -177,7 +185,7 @@ public class CorralListener implements Listener {
     public void onEntityDamage(EntityDamageEvent event) {
         if(event.getEntity() instanceof Horse && plugin.config.IMMORTALITY) {
             Horse horse = (Horse)event.getEntity();
-            if(plugin.isHorseLocked(horse)) {
+            if(utils.isHorseLocked(horse)) {
                 if(horse.getPassenger() == null && !onCooldown.contains(horse.getUniqueId())) {
                     event.setCancelled(true);                    
                 }
@@ -217,7 +225,7 @@ public class CorralListener implements Listener {
         if(event.getVehicle() instanceof Horse) {
             Horse horse = (Horse)event.getVehicle();
             final UUID horseID = horse.getUniqueId();
-            if(plugin.isHorseLocked(horse) && plugin.config.IMMORTAL_COOLDOWN) {
+            if(utils.isHorseLocked(horse) && plugin.config.IMMORTAL_COOLDOWN) {
                 onCooldown.add(horseID);
                 new BukkitRunnable() {
                     @Override
@@ -235,7 +243,7 @@ public class CorralListener implements Listener {
         if(player.getVehicle() != null) {
             if(player.getVehicle() instanceof Horse) {
                 Horse horse = (Horse)player.getVehicle();
-                if(plugin.isHorseLocked(horse)) {
+                if(utils.isHorseLocked(horse)) {
                     if(!horse.getOwner().getName().equalsIgnoreCase(player.getName())) {
                         horse.eject();
                     }
