@@ -34,6 +34,7 @@ public class Configuration {
             plugin.getConfig().createSection("horses");
         }
         HORSES = (Map)plugin.getConfig().getConfigurationSection("horses").getValues(true);
+        
     }
     
     public void reload() {

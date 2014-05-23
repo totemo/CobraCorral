@@ -2,19 +2,20 @@ package us.drome.cobracorral;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.configuration.serialization.ConfigurationSerializable;
 import org.bukkit.entity.Horse;
 
 public class LockedHorse implements ConfigurationSerializable {
-    private String owner;
+    private UUID owner;
     private String name;
     private String appearance;
     private String armor;
     private String location;
     
-    public LockedHorse(Horse horse, String tamer) {
+    public LockedHorse(Horse horse, UUID tamer) {
         owner = tamer;
         name = (horse.getCustomName() != null ? horse.getCustomName() : "NoName");
         appearance = ((horse.getVariant() == Horse.Variant.HORSE) ? horse.getColor().toString() +
@@ -26,7 +27,7 @@ public class LockedHorse implements ConfigurationSerializable {
     }
         
     public LockedHorse(Map<String, Object> map) {
-        owner = (String)map.get("owner");
+        owner = UUID.fromString((String)map.get("owner"));
         name = (String)map.get("name");
         appearance = (String)map.get("appearance");
         armor = (String)map.get("armor");
@@ -41,7 +42,7 @@ public class LockedHorse implements ConfigurationSerializable {
         return this;
     }
     
-    public String getOwner() {
+    public UUID getOwner() {
         return owner;
     }
     
@@ -89,7 +90,7 @@ public class LockedHorse implements ConfigurationSerializable {
     @Override
     public Map<String, Object> serialize() {
         Map<String, Object> map = new HashMap<>();
-        map.put("owner", owner);
+        map.put("owner", owner.toString());
         map.put("name", name);
         map.put("appearance", appearance);
         map.put("armor", armor);
