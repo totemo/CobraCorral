@@ -1,6 +1,8 @@
 package us.drome.cobracorral;
 
+import java.util.HashMap;
 import java.util.Map;
+import org.bukkit.OfflinePlayer;
 
 public class Configuration {
     private final CobraCorral plugin;
@@ -17,7 +19,6 @@ public class Configuration {
     }
     
     public void save() {
-        reload();
         plugin.getConfig().set("horses", HORSES);
         plugin.saveConfig();
     }
@@ -34,7 +35,9 @@ public class Configuration {
             plugin.getConfig().createSection("horses");
         }
         HORSES = (Map)plugin.getConfig().getConfigurationSection("horses").getValues(true);
-        
+        if(HORSES != null && !HORSES.isEmpty() && HORSES.entrySet().iterator().next().getValue().getOwner().length() < 36) {
+            convertToUUID();
+        }
     }
     
     public void reload() {
@@ -43,5 +46,14 @@ public class Configuration {
         load();
         
         HORSES = tempHorses;
+    }
+    
+    public void convertToUUID() {
+        Map<String, LockedHorse> tempHORSES = new HashMap<>();
+        for(String key : HORSES.keySet()) {
+            OfflinePlayer temp = plugin.getServer().getOfflinePlayer(HORSES.get(key).getOwner());
+            plugin.getLogger().info("Converting: " + HORSES.get(key).getOwner() + " to " + temp.getUniqueId() + temp.getName());
+            tempHORSES.put(key, HORSES.get(key).setOwner(temp.getUniqueId(), temp.getName()));
+        }
     }
 }

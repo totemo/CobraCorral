@@ -9,25 +9,31 @@ import org.bukkit.configuration.serialization.ConfigurationSerializable;
 import org.bukkit.entity.Horse;
 
 public class LockedHorse implements ConfigurationSerializable {
-    private UUID owner;
+    private UUID ownerID;
+    private String owner;
     private String name;
     private String appearance;
     private String armor;
     private String location;
     
-    public LockedHorse(Horse horse, UUID tamer) {
-        owner = tamer;
+    public LockedHorse(Horse horse) {
+        ownerID = horse.getOwner().getUniqueId();
+        owner = horse.getOwner().getName();
         name = (horse.getCustomName() != null ? horse.getCustomName() : "NoName");
-        appearance = ((horse.getVariant() == Horse.Variant.HORSE) ? horse.getColor().toString() +
-            " " + (horse.getStyle().toString().equalsIgnoreCase("none") ? "" :
-            horse.getStyle().toString()) : horse.getVariant().toString());
+        appearance = ((horse.getVariant() == Horse.Variant.HORSE) ? horse.getColor().toString() + " " +
+                (horse.getStyle().toString().equalsIgnoreCase("none") ? "" : horse.getStyle().toString()) : horse.getVariant().toString());
         armor = (horse.getInventory().getArmor() != null ? horse.getInventory().getArmor().getType().toString() : "No Armor");
         Location horseLoc = horse.getLocation();
         location = horseLoc.getBlockX() + ":" + horseLoc.getBlockY() + ":" + horseLoc.getBlockZ() + ":" + horseLoc.getWorld().getName();
     }
         
     public LockedHorse(Map<String, Object> map) {
-        owner = UUID.fromString((String)map.get("owner"));
+        try {
+            ownerID = UUID.fromString((String)map.get("ownerID"));
+        } catch(Exception e) {
+            ownerID = null;
+        }
+        owner = (String)map.get("owner");
         name = (String)map.get("name");
         appearance = (String)map.get("appearance");
         armor = (String)map.get("armor");
@@ -42,8 +48,18 @@ public class LockedHorse implements ConfigurationSerializable {
         return this;
     }
     
-    public UUID getOwner() {
+    public UUID getOwnerID() {
+        return ownerID;
+    }
+    
+    public String getOwner() {
         return owner;
+    }
+    
+    public LockedHorse setOwner(UUID newID, String newName) {
+        ownerID = newID;
+        owner = newName;
+        return this;
     }
     
     public String getName() {

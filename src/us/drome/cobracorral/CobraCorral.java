@@ -94,15 +94,15 @@ public class CobraCorral extends JavaPlugin {
                 break;
             case "horse-list":
                 if(sender instanceof Player) {
-                    UUID player = ((Player)sender).getUniqueId();
+                   String playerID = ((Player)sender).getUniqueId().toString();
                     if(args.length > 0 && (sender.hasPermission("ccorral.list-all") || sender.hasPermission("ccorral.admin"))) {
-                        player = getServer().getOfflinePlayer(args[0]).getUniqueId();
+                        playerID = getServer().getOfflinePlayer(args[0]).getUniqueId().toString();
                     }
                     List<String> response = new ArrayList<>();
                     int count = 0;
 
                     for(String key : config.HORSES.keySet()) {
-                        if(config.HORSES.get(key).getOwner().equals(player)) {
+                        if(config.HORSES.get(key).getOwnerID().equals(playerID)) {
                             count++;
                             LockedHorse lhorse = config.HORSES.get(key);
                             Horse horse = utils.getHorse(lhorse.getLocation(this), UUID.fromString(key));
@@ -110,7 +110,7 @@ public class CobraCorral extends JavaPlugin {
                                 config.HORSES.put(key, lhorse.updateHorse(horse));
                             } else {
                                 getLogger().info("Failed to load horse " + key.toString() + " from chunk at location " + lhorse.getLocation() +
-                                    " for player " + utils.getPlayerName(lhorse.getOwner()) + ", using cache.");
+                                    " for player " + utils.getOwnerName(playerID) + ", using cache.");
                             }
                             response.add(String.valueOf(count) + ChatColor.GRAY + " | " + lhorse.getName() + " | " + lhorse.getAppearance() +
                                 " | " + lhorse.getArmor() + " | " + lhorse.getWorld());
@@ -119,13 +119,13 @@ public class CobraCorral extends JavaPlugin {
                     
                     if(!response.isEmpty()) {
                         response.add(0, ChatColor.GRAY + "Horses locked by " +
-                            (player.equals(((Player)sender).getUniqueId()) ? "you" : utils.getPlayerName(player)) + ":");
+                            (playerID.equals(((Player)sender).getUniqueId().toString()) ? "you" : utils.getOwnerName(playerID)) + ":");
                         for(String line : response) {
                             sender.sendMessage(line);
                         }
                     } else {
                         sender.sendMessage(ChatColor.GRAY + "There are no horses locked by " +
-                            (player.equals(((Player)sender).getUniqueId()) ? "you" : utils.getPlayerName(player)) + ".");
+                            (playerID.equals(((Player)sender).getUniqueId().toString()) ? "you" : utils.getOwnerName(playerID)) + ".");
                     }                             
                 } else {
                     sender.sendMessage("That command can only be ran by a Player.");
@@ -134,14 +134,14 @@ public class CobraCorral extends JavaPlugin {
             case "horse-gps":
                 if(sender instanceof Player) {
                     if(args.length > 0) {
-                        UUID playerID = ((Player)sender).getUniqueId();
+                        String playerID = ((Player)sender).getUniqueId().toString();
                         int target = 0;
                         int count = 0;
                         
                         if(args.length > 1) {
                             if(sender.hasPermission("ccorral.gps-all") || sender.hasPermission("ccorral.admin")) {
                                 if(getServer().getOfflinePlayer(args[0]).hasPlayedBefore()) {
-                                    playerID = getServer().getOfflinePlayer(args[0]).getUniqueId();
+                                    playerID = getServer().getOfflinePlayer(args[0]).getUniqueId().toString();
                                     try {
                                         target = Integer.parseInt(args[1]);
                                     } catch (NumberFormatException e) {
@@ -166,7 +166,7 @@ public class CobraCorral extends JavaPlugin {
                         }
                         
                         for(String key : config.HORSES.keySet()) {
-                            if(config.HORSES.get(key).getOwner().equals(playerID)) {
+                            if(config.HORSES.get(key).getOwnerID().equals(playerID)) {
                                 count++;
                                 if(count == target) {
                                     LockedHorse lhorse = config.HORSES.get(key);
@@ -175,7 +175,7 @@ public class CobraCorral extends JavaPlugin {
                                         config.HORSES.put(key, lhorse.updateHorse(horse));
                                     } else {
                                         getLogger().info("Failed to load horse " + key + " from chunk at location " +
-                                            lhorse.getLocation() + " for player " + utils.getPlayerName(lhorse.getOwner()) + ", using cache.");
+                                            lhorse.getLocation() + " for player " + utils.getOwnerName(playerID) + ", using cache.");
                                     }
                                     
                                     Player player = (Player)sender;
@@ -205,12 +205,12 @@ public class CobraCorral extends JavaPlugin {
                 break;
             case "horse-tp":
                 if(args.length > 1) {
-                    UUID playerID;
+                    String playerID;
                     int target = 0;
                     int count = 0;
                     
                     if(getServer().getOfflinePlayer(args[0]).hasPlayedBefore()) {
-                        playerID = getServer().getOfflinePlayer(args[0]).getUniqueId();
+                        playerID = getServer().getOfflinePlayer(args[0]).getUniqueId().toString();
                         try {
                             target = Integer.parseInt(args[1]);
                         } catch (NumberFormatException e) {
@@ -223,7 +223,7 @@ public class CobraCorral extends JavaPlugin {
                     }
                     
                     for(String key : config.HORSES.keySet()) {
-                        if(config.HORSES.get(key).getOwner().equals(playerID)) {
+                        if(config.HORSES.get(key).getOwnerID().equals(playerID)) {
                             count++;
                             if(count == target) {
                                 LockedHorse lhorse = config.HORSES.get(key);
@@ -249,7 +249,7 @@ public class CobraCorral extends JavaPlugin {
                                 } else {
                                     sender.sendMessage(ChatColor.GRAY + "That horse failed to load, please try again.");
                                     getLogger().info("Failed to load horse " + key + " from chunk at location " +
-                                        lhorse.getLocation() + " for player " + utils.getPlayerName(lhorse.getOwner()) + ", cancelling teleport.");
+                                        lhorse.getLocation() + " for player " + utils.getOwnerName(playerID) + ", cancelling teleport.");
                                 }
                                 return true;
                             }

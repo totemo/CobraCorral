@@ -50,13 +50,13 @@ public class Utils {
         return (config.HORSES.containsKey(horse.getUniqueId().toString()) ? true : false);
     }
     
-    public boolean maxHorsesLocked(UUID player) {
+    public boolean maxHorsesLocked(UUID playerID) {
         if(config.MAX_HORSES == 0) {
             return false;
         }
         int count = 0;
         for(String key : config.HORSES.keySet()) {
-            if(config.HORSES.get(key).getOwner().equals(player)) {
+            if(config.HORSES.get(key).getOwner().equals(playerID)) {
                 count++;
             }
         }
@@ -66,16 +66,16 @@ public class Utils {
             return false;
     }
     
-    public void lockHorse(UUID id, Horse horse,UUID tamer) {
-        config.HORSES.put(id.toString(), new LockedHorse(horse, tamer));
+    public void lockHorse(UUID id, Horse horse) {
+        config.HORSES.put(id.toString(), new LockedHorse(horse));
     }
     
     public void unlockHorse(UUID id) {
         config.HORSES.remove(id.toString());
     }
     
-    public String getPlayerName(UUID id) {
-        return plugin.getServer().getOfflinePlayer(id).getName();
+    public String getOwnerName(String id) {
+        return plugin.getServer().getOfflinePlayer(UUID.fromString(id)).getName();
     }
     
     public void helpDisplay(CommandSender sender) {
