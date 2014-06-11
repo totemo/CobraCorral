@@ -74,8 +74,8 @@ public class Utils {
         config.HORSES.remove(id.toString());
     }
     
-    public String getOwnerName(String id) {
-        return plugin.getServer().getOfflinePlayer(UUID.fromString(id)).getName();
+    public String getOwnerName(UUID id) {
+        return plugin.getServer().getOfflinePlayer(id).getName();
     }
     
     public void helpDisplay(CommandSender sender) {

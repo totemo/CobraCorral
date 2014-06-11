@@ -94,15 +94,15 @@ public class CobraCorral extends JavaPlugin {
                 break;
             case "horse-list":
                 if(sender instanceof Player) {
-                   String playerID = ((Player)sender).getUniqueId().toString();
+                   UUID playerID = ((Player)sender).getUniqueId();
                     if(args.length > 0 && (sender.hasPermission("ccorral.list-all") || sender.hasPermission("ccorral.admin"))) {
-                        playerID = getServer().getOfflinePlayer(args[0]).getUniqueId().toString();
+                        playerID = getServer().getOfflinePlayer(args[0]).getUniqueId();
                     }
                     List<String> response = new ArrayList<>();
                     int count = 0;
 
                     for(String key : config.HORSES.keySet()) {
-                        if(config.HORSES.get(key).getOwnerID().equals(playerID)) {
+                        if(config.HORSES.get(key).getOwner().equals(playerID)) {
                             count++;
                             LockedHorse lhorse = config.HORSES.get(key);
                             Horse horse = utils.getHorse(lhorse.getLocation(this), UUID.fromString(key));
@@ -134,14 +134,14 @@ public class CobraCorral extends JavaPlugin {
             case "horse-gps":
                 if(sender instanceof Player) {
                     if(args.length > 0) {
-                        String playerID = ((Player)sender).getUniqueId().toString();
+                        UUID playerID = ((Player)sender).getUniqueId();
                         int target = 0;
                         int count = 0;
                         
                         if(args.length > 1) {
                             if(sender.hasPermission("ccorral.gps-all") || sender.hasPermission("ccorral.admin")) {
                                 if(getServer().getOfflinePlayer(args[0]).hasPlayedBefore()) {
-                                    playerID = getServer().getOfflinePlayer(args[0]).getUniqueId().toString();
+                                    playerID = getServer().getOfflinePlayer(args[0]).getUniqueId();
                                     try {
                                         target = Integer.parseInt(args[1]);
                                     } catch (NumberFormatException e) {
@@ -166,7 +166,7 @@ public class CobraCorral extends JavaPlugin {
                         }
                         
                         for(String key : config.HORSES.keySet()) {
-                            if(config.HORSES.get(key).getOwnerID().equals(playerID)) {
+                            if(config.HORSES.get(key).getOwner().equals(playerID)) {
                                 count++;
                                 if(count == target) {
                                     LockedHorse lhorse = config.HORSES.get(key);
@@ -205,12 +205,12 @@ public class CobraCorral extends JavaPlugin {
                 break;
             case "horse-tp":
                 if(args.length > 1) {
-                    String playerID;
+                    UUID playerID;
                     int target = 0;
                     int count = 0;
                     
                     if(getServer().getOfflinePlayer(args[0]).hasPlayedBefore()) {
-                        playerID = getServer().getOfflinePlayer(args[0]).getUniqueId().toString();
+                        playerID = getServer().getOfflinePlayer(args[0]).getUniqueId();
                         try {
                             target = Integer.parseInt(args[1]);
                         } catch (NumberFormatException e) {
@@ -223,7 +223,7 @@ public class CobraCorral extends JavaPlugin {
                     }
                     
                     for(String key : config.HORSES.keySet()) {
-                        if(config.HORSES.get(key).getOwnerID().equals(playerID)) {
+                        if(config.HORSES.get(key).getOwner().equals(playerID)) {
                             count++;
                             if(count == target) {
                                 LockedHorse lhorse = config.HORSES.get(key);

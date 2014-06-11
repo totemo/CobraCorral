@@ -9,16 +9,14 @@ import org.bukkit.configuration.serialization.ConfigurationSerializable;
 import org.bukkit.entity.Horse;
 
 public class LockedHorse implements ConfigurationSerializable {
-    private UUID ownerID;
-    private String owner;
+    private UUID owner;
     private String name;
     private String appearance;
     private String armor;
     private String location;
     
     public LockedHorse(Horse horse) {
-        ownerID = horse.getOwner().getUniqueId();
-        owner = horse.getOwner().getName();
+        owner = horse.getOwner().getUniqueId();
         name = (horse.getCustomName() != null ? horse.getCustomName() : "NoName");
         appearance = ((horse.getVariant() == Horse.Variant.HORSE) ? horse.getColor().toString() + " " +
                 (horse.getStyle().toString().equalsIgnoreCase("none") ? "" : horse.getStyle().toString()) : horse.getVariant().toString());
@@ -28,12 +26,7 @@ public class LockedHorse implements ConfigurationSerializable {
     }
         
     public LockedHorse(Map<String, Object> map) {
-        try {
-            ownerID = UUID.fromString((String)map.get("ownerID"));
-        } catch(Exception e) {
-            ownerID = null;
-        }
-        owner = (String)map.get("owner");
+        owner = UUID.fromString((String)map.get("owner"));
         name = (String)map.get("name");
         appearance = (String)map.get("appearance");
         armor = (String)map.get("armor");
@@ -48,17 +41,12 @@ public class LockedHorse implements ConfigurationSerializable {
         return this;
     }
     
-    public UUID getOwnerID() {
-        return ownerID;
-    }
-    
-    public String getOwner() {
+    public UUID getOwner() {
         return owner;
     }
     
-    public LockedHorse setOwner(UUID newID, String newName) {
-        ownerID = newID;
-        owner = newName;
+    public LockedHorse setOwner(UUID newID) {
+        owner = newID;
         return this;
     }
     
