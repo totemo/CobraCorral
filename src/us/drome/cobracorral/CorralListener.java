@@ -15,10 +15,12 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.entity.EntityTameEvent;
+import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.vehicle.VehicleExitEvent;
 import org.bukkit.event.world.ChunkUnloadEvent;
+import org.bukkit.inventory.HorseInventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.scheduler.BukkitRunnable;
@@ -235,16 +237,16 @@ public class CorralListener implements Listener {
                     if(owner.isOnline()) {
                         owner.sendMessage(ChatColor.GRAY + (horse.getCustomName() != null ? horse.getCustomName() : horse.getVariant().toString()) +
                             " has died due to the actions of " + causedBy.getName() + ".");
-                        plugin.getLogger().info(owner.getName() + "'s horse, " + (horse.getCustomName() != null ? horse.getCustomName() : horse.getVariant().toString()) +
-                            ", has died due to " + causedBy.getName() + "'s actions.");
                     }
+                    plugin.getLogger().info(owner.getName() + "'s horse, " + (horse.getCustomName() != null ? horse.getCustomName() : horse.getVariant().toString()) +
+                        ", has died due to " + causedBy.getName() + "'s actions.");
                 } else {
                     if(owner.isOnline()) {
                         owner.sendMessage(ChatColor.GRAY + (horse.getCustomName() != null ? horse.getCustomName() : horse.getVariant().toString()) +
                             " has died due to your actions.");
-                        plugin.getLogger().info(owner.getName() + "'s horse, " + (horse.getCustomName() != null ? horse.getCustomName() : horse.getVariant().toString()) +
-                            ", has died due to the owner's actions.");
                     }
+                    plugin.getLogger().info(owner.getName() + "'s horse, " + (horse.getCustomName() != null ? horse.getCustomName() : horse.getVariant().toString()) +
+                        ", has died due to the owner's actions.");
                 }
                 plugin.config.HORSES.remove(horse.getUniqueId().toString());
             }
@@ -264,6 +266,17 @@ public class CorralListener implements Listener {
                         onCooldown.remove(horseID);
                     }
                 }.runTaskLaterAsynchronously(plugin, (plugin.config.COOLDOWN_TIME * 20));
+            }
+        }
+    }
+    
+    @EventHandler
+    public void onInventoryClose(InventoryCloseEvent event) {
+        if(event.getInventory() instanceof HorseInventory && event.getInventory().getHolder() instanceof Horse) {
+            Horse horse = (Horse)event.getInventory().getHolder();
+            if(utils.isHorseLocked(horse)) {
+                LockedHorse lhorse = config.HORSES.get(horse.getUniqueId());
+                lhorse.updateHorse(horse);
             }
         }
     }

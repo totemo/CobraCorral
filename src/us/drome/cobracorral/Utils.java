@@ -89,6 +89,10 @@ public class Utils {
             sender.sendMessage(ChatColor.WHITE + "/testdrive" + ChatColor.GRAY + " | Temporarily allow others to ride a locked horse.");
             sender.sendMessage(ChatColor.WHITE + "    aliases:" + ChatColor.GRAY + " /horse-test, /htest");
         }
+        if(sender.hasPermission("ccorral.free")) {
+            sender.sendMessage(ChatColor.WHITE + "/horse-free" + ChatColor.GRAY + " | Set free any horse you own.");
+            sender.sendMessage(ChatColor.WHITE + "    aliases:" + ChatColor.GRAY + " /hfree");
+        }
         if(sender.hasPermission("ccorral.list")) {
             sender.sendMessage(ChatColor.WHITE + "/horse-list" + ChatColor.GRAY + " | List all horses you have locked.");
             sender.sendMessage(ChatColor.WHITE + "    aliases:" + ChatColor.GRAY + " /hlist");

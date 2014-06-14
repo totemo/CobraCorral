@@ -99,8 +99,8 @@ public class CobraCorral extends JavaPlugin {
                         playerID = getServer().getOfflinePlayer(args[0]).getUniqueId();
                     }
                     List<String> response = new ArrayList<>();
-                    int count = 0;
 
+                    int count = 0;
                     for(String key : config.HORSES.keySet()) {
                         if(config.HORSES.get(key).getOwner().equals(playerID)) {
                             count++;
@@ -119,13 +119,13 @@ public class CobraCorral extends JavaPlugin {
                     
                     if(!response.isEmpty()) {
                         response.add(0, ChatColor.GRAY + "Horses locked by " +
-                            (playerID.equals(((Player)sender).getUniqueId().toString()) ? "you" : utils.getOwnerName(playerID)) + ":");
+                            (playerID.equals(((Player)sender).getUniqueId()) ? "you" : utils.getOwnerName(playerID)) + ":");
                         for(String line : response) {
                             sender.sendMessage(line);
                         }
                     } else {
                         sender.sendMessage(ChatColor.GRAY + "There are no horses locked by " +
-                            (playerID.equals(((Player)sender).getUniqueId().toString()) ? "you" : utils.getOwnerName(playerID)) + ".");
+                            (playerID.equals(((Player)sender).getUniqueId()) ? "you" : utils.getOwnerName(playerID)) + ".");
                     }                             
                 } else {
                     sender.sendMessage("That command can only be ran by a Player.");
@@ -204,61 +204,66 @@ public class CobraCorral extends JavaPlugin {
                 }   
                 break;
             case "horse-tp":
-                if(args.length > 1) {
-                    UUID playerID;
-                    int target = 0;
-                    int count = 0;
-                    
-                    if(getServer().getOfflinePlayer(args[0]).hasPlayedBefore()) {
-                        playerID = getServer().getOfflinePlayer(args[0]).getUniqueId();
-                        try {
-                            target = Integer.parseInt(args[1]);
-                        } catch (NumberFormatException e) {
-                            sender.sendMessage(ChatColor.GRAY + "Horse ID provided: " + args[1] + ", is not a valid integer.");
+                if(sender instanceof Player) {
+                    if(args.length > 1) {
+                        UUID playerID;
+                        int target = 0;
+                        int count = 0;
+
+                        if(getServer().getOfflinePlayer(args[0]).hasPlayedBefore()) {
+                            playerID = getServer().getOfflinePlayer(args[0]).getUniqueId();
+                            try {
+                                target = Integer.parseInt(args[1]);
+                            } catch (NumberFormatException e) {
+                                sender.sendMessage(ChatColor.GRAY + "Horse ID provided: " + args[1] + ", is not a valid integer.");
+                                return false;
+                            }
+                        } else {
+                            sender.sendMessage(ChatColor.GRAY + args[0] + " is not a valid player.");
                             return false;
                         }
-                    } else {
-                        sender.sendMessage(ChatColor.GRAY + args[0] + " is not a valid player.");
-                        return false;
-                    }
-                    
-                    for(String key : config.HORSES.keySet()) {
-                        if(config.HORSES.get(key).getOwner().equals(playerID)) {
-                            count++;
-                            if(count == target) {
-                                LockedHorse lhorse = config.HORSES.get(key);
-                                Horse horse = utils.getHorse(lhorse.getLocation(this), UUID.fromString(key));
-                                if(horse != null) {
-                                    config.HORSES.put(key, lhorse.updateHorse(horse));
-                                    if (!horse.getLocation().getWorld().equals(((Player)sender).getWorld())) {
-                                        sender.sendMessage(ChatColor.GRAY + "Cannot teleport horses across worlds. Enter world \"" +
-                                            lhorse.getWorld() + "\" to teleport this horse.");
-                                        return true;
-                                    }
-                                    if(horse.getPassenger() == null) {
-                                        ((Player)sender).playSound(((Player)sender).getLocation(), Sound.ENDERMAN_TELEPORT, 1f , 1f);
-                                        sender.sendMessage(ChatColor.GRAY + lhorse.getName() + " " + lhorse.getAppearance() +
-                                            " has been teleported to your location!");
-                                        horse.teleport(((Player)sender).getLocation());
+
+                        for(String key : config.HORSES.keySet()) {
+                            if(config.HORSES.get(key).getOwner().equals(playerID)) {
+                                count++;
+                                if(count == target) {
+                                    LockedHorse lhorse = config.HORSES.get(key);
+                                    Horse horse = utils.getHorse(lhorse.getLocation(this), UUID.fromString(key));
+                                    if(horse != null) {
+                                        config.HORSES.put(key, lhorse.updateHorse(horse));
+                                        if (!horse.getLocation().getWorld().equals(((Player)sender).getWorld())) {
+                                            sender.sendMessage(ChatColor.GRAY + "Cannot teleport horses across worlds. Enter world \"" +
+                                                lhorse.getWorld() + "\" to teleport this horse.");
+                                            return true;
+                                        }
+                                        if(horse.getPassenger() == null) {
+                                            ((Player)sender).playSound(((Player)sender).getLocation(), Sound.ENDERMAN_TELEPORT, 1f , 1f);
+                                            sender.sendMessage(ChatColor.GRAY + lhorse.getName() + " " + lhorse.getAppearance() +
+                                                " has been teleported to your location!");
+                                            horse.teleport(((Player)sender).getLocation());
+
+                                        } else {
+                                            String passenger = horse.getPassenger() instanceof Player ? ((Player)horse.getPassenger()).getName() : horse.getPassenger().toString();
+                                            sender.sendMessage(ChatColor.GRAY + lhorse.getName() + " " + lhorse.getAppearance() +
+                                                " is being ridden by " + passenger + " and can't be teleported.");
+                                        }
 
                                     } else {
-                                        sender.sendMessage(ChatColor.GRAY + lhorse.getName() + " " + lhorse.getAppearance() +
-                                            " is being ridden by " + ((Player)horse.getPassenger()).getName() + " and can't be teleported.");
+                                        sender.sendMessage(ChatColor.GRAY + "That horse failed to load, please try again.");
+                                        getLogger().info("Failed to load horse " + key + " from chunk at location " +
+                                            lhorse.getLocation() + " for player " + utils.getOwnerName(playerID) + ", cancelling teleport.");
                                     }
-
-                                } else {
-                                    sender.sendMessage(ChatColor.GRAY + "That horse failed to load, please try again.");
-                                    getLogger().info("Failed to load horse " + key + " from chunk at location " +
-                                        lhorse.getLocation() + " for player " + utils.getOwnerName(playerID) + ", cancelling teleport.");
+                                    return true;
                                 }
-                                return true;
                             }
                         }
+
+                        sender.sendMessage(ChatColor.GRAY + "No horse found by that ID.");
+                    } else {
+                        return false;
                     }
-                    
-                    sender.sendMessage(ChatColor.GRAY + "No horse found by that ID.");
                 } else {
-                    return false;
+                    sender.sendMessage("That command can only be ran by a Player.");
                 }
                 break;
             case "horse-info":

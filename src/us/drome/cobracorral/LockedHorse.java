@@ -45,8 +45,8 @@ public class LockedHorse implements ConfigurationSerializable {
         return owner;
     }
     
-    public LockedHorse setOwner(UUID newID) {
-        owner = newID;
+    public LockedHorse setOwner(UUID owner) {
+        this.owner = owner;
         return this;
     }
     
