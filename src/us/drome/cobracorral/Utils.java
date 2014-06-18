@@ -8,6 +8,7 @@ import org.bukkit.World;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Horse;
+import org.bukkit.entity.Player;
 
 public class Utils {
     CobraCorral plugin;
@@ -78,6 +79,36 @@ public class Utils {
         return plugin.getServer().getOfflinePlayer(id).getName();
     }
     
+    public void clearMetaKeys(Player player) {
+        if(player.hasMetadata(CobraCorral.HORSE_INFO)) {
+            player.removeMetadata(CobraCorral.HORSE_INFO, plugin);
+        } else if (player.hasMetadata(CobraCorral.HORSE_LOCK)) {
+            player.removeMetadata(CobraCorral.HORSE_LOCK, plugin);
+        } else if (player.hasMetadata(CobraCorral.HORSE_TEST_DRIVE)) {
+            player.removeMetadata(CobraCorral.HORSE_TEST_DRIVE, plugin);
+        } else if (player.hasMetadata(CobraCorral.HORSE_UNLOCK)) {
+            player.removeMetadata(CobraCorral.HORSE_UNLOCK, plugin);
+        } else if (player.hasMetadata(CobraCorral.HORSE_FREE)) {
+            player.removeMetadata(CobraCorral.HORSE_FREE, plugin);
+        }
+    }
+    
+    public boolean hasMetaKeys(Player player) {
+        if(player.hasMetadata(CobraCorral.HORSE_INFO)) {
+            return true;
+        } else if (player.hasMetadata(CobraCorral.HORSE_LOCK)) {
+            return true;
+        } else if (player.hasMetadata(CobraCorral.HORSE_TEST_DRIVE)) {
+            return true;
+        } else if (player.hasMetadata(CobraCorral.HORSE_UNLOCK)) {
+            return true;
+        } else if (player.hasMetadata(CobraCorral.HORSE_FREE)) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+    
     public void helpDisplay(CommandSender sender) {
         sender.sendMessage(ChatColor.GRAY + "=======" + ChatColor.WHITE + "CobraCorral v" + plugin.getDescription().getVersion() +
             " Commands" + ChatColor.GRAY + "=======");
@@ -85,6 +116,9 @@ public class Utils {
             sender.sendMessage(ChatColor.WHITE + "/corral" + ChatColor.GRAY + " | Used to lock a horse you have tamed.");
             sender.sendMessage(ChatColor.WHITE + "    aliases:" + ChatColor.GRAY + " /horse-lock, /hlock");
             sender.sendMessage(ChatColor.WHITE + "/uncorral" + ChatColor.GRAY + " | Used to unlock a horse you have tamed.");
+            if(sender.hasPermission("ccorral.admin")) {
+               sender.sendMessage(ChatColor.WHITE + "/uncorral <player> <horseID>" + ChatColor.GRAY + " | Remotely unlock a specific horse."); 
+            }
             sender.sendMessage(ChatColor.WHITE + "    aliases:" + ChatColor.GRAY + " /horse-unlock, /hunlock");
             sender.sendMessage(ChatColor.WHITE + "/testdrive" + ChatColor.GRAY + " | Temporarily allow others to ride a locked horse.");
             sender.sendMessage(ChatColor.WHITE + "    aliases:" + ChatColor.GRAY + " /horse-test, /htest");

@@ -63,7 +63,7 @@ public class CorralListener implements Listener {
                 player.playSound(player.getLocation(), Sound.ORB_PICKUP, 1f, 1f);
                 player.sendMessage("Owner:" + ChatColor.GRAY + owner + ChatColor.RESET + " Status:" +
                     ChatColor.GRAY + status + ChatColor.RESET + " UUID:" + ChatColor.GRAY + UUID);
-                clearMetaKeys(player);
+                utils.clearMetaKeys(player);
                 event.setCancelled(true);
             } else if (horse.isTamed()) {
                 if(player.hasMetadata(CobraCorral.HORSE_LOCK)) {
@@ -88,7 +88,7 @@ public class CorralListener implements Listener {
                         player.sendMessage(ChatColor.GRAY + "You do not own that horse.");
                         player.playSound(player.getLocation(), Sound.ITEM_BREAK, 1f, 1f); 
                     }
-                    clearMetaKeys(player);
+                    utils.clearMetaKeys(player);
                     event.setCancelled(true);
                 } else if(player.hasMetadata(CobraCorral.HORSE_TEST_DRIVE)) {
                     if(player.getName().equalsIgnoreCase(horse.getOwner().getName())) {
@@ -125,7 +125,7 @@ public class CorralListener implements Listener {
                         player.sendMessage(ChatColor.GRAY + "You do not own that horse.");
                         player.playSound(player.getLocation(), Sound.ITEM_BREAK, 1f, 1f); 
                     }
-                    clearMetaKeys(player);
+                    utils.clearMetaKeys(player);
                     event.setCancelled(true);
                 } else if(player.hasMetadata(CobraCorral.HORSE_UNLOCK)) {
                     if(player.getName().equalsIgnoreCase(horse.getOwner().getName()) || player.hasPermission("ccorral.admin")) {
@@ -147,7 +147,7 @@ public class CorralListener implements Listener {
                         player.sendMessage(ChatColor.GRAY + "You do not own that horse.");
                         player.playSound(player.getLocation(), Sound.ITEM_BREAK, 1f, 1f); 
                     }
-                    clearMetaKeys(player);
+                    utils.clearMetaKeys(player);
                     event.setCancelled(true);
                 } else if (player.hasMetadata(CobraCorral.HORSE_FREE)) {
                     if(player.equals(horse.getOwner()) || player.hasPermission("ccorral.admin")) {
@@ -176,7 +176,7 @@ public class CorralListener implements Listener {
                         player.sendMessage(ChatColor.GRAY + "You do not own that horse.");
                         player.playSound(player.getLocation(), Sound.ITEM_BREAK, 1f, 1f); 
                     }
-                    clearMetaKeys(player);
+                    utils.clearMetaKeys(player);
                     event.setCancelled(true);
                 } else if (utils.isHorseLocked(horse)) {
                     if(!player.getName().equalsIgnoreCase(horse.getOwner().getName())) {
@@ -187,8 +187,8 @@ public class CorralListener implements Listener {
                 }
             }
         } else {
-            if(hasMetaKeys(player)) {
-                clearMetaKeys(player);
+            if(utils.hasMetaKeys(player)) {
+                utils.clearMetaKeys(player);
                 player.sendMessage(ChatColor.GRAY + "You can only perform that action on a horse.");
             }
         }
@@ -306,32 +306,6 @@ public class CorralListener implements Listener {
                     plugin.config.HORSES.put(entity.getUniqueId().toString(), lhorse.updateHorse((Horse)entity));
                 }
             }
-        }
-    }
-    
-    public void clearMetaKeys(Player player) {
-        if(player.hasMetadata(CobraCorral.HORSE_INFO)) {
-            player.removeMetadata(CobraCorral.HORSE_INFO, plugin);
-        } else if (player.hasMetadata(CobraCorral.HORSE_LOCK)) {
-            player.removeMetadata(CobraCorral.HORSE_LOCK, plugin);
-        } else if (player.hasMetadata(CobraCorral.HORSE_TEST_DRIVE)) {
-            player.removeMetadata(CobraCorral.HORSE_TEST_DRIVE, plugin);
-        } else if (player.hasMetadata(CobraCorral.HORSE_UNLOCK)) {
-            player.removeMetadata(CobraCorral.HORSE_UNLOCK, plugin);
-        }
-    }
-    
-    public boolean hasMetaKeys(Player player) {
-        if(player.hasMetadata(CobraCorral.HORSE_INFO)) {
-            return true;
-        } else if (player.hasMetadata(CobraCorral.HORSE_LOCK)) {
-            return true;
-        } else if (player.hasMetadata(CobraCorral.HORSE_TEST_DRIVE)) {
-            return true;
-        } else if (player.hasMetadata(CobraCorral.HORSE_UNLOCK)) {
-            return true;
-        } else {
-            return false;
         }
     }
 }

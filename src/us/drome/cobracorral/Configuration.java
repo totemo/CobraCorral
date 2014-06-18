@@ -1,5 +1,6 @@
 package us.drome.cobracorral;
 
+import java.util.HashMap;
 import java.util.Map;
 
 public class Configuration {
@@ -32,7 +33,12 @@ public class Configuration {
         if(!plugin.getConfig().contains("horses")) {
             plugin.getConfig().createSection("horses");
         }
-        HORSES = (Map)plugin.getConfig().getConfigurationSection("horses").getValues(true);
+        Map horseList = (Map)plugin.getConfig().getConfigurationSection("horses").getValues(true);
+        try {
+            HORSES = horseList;
+        } catch (IllegalArgumentException e) {
+            HORSES = ConvertHORSES(horseList);
+        }
     }
     
     public void reload() {
@@ -41,5 +47,9 @@ public class Configuration {
         load();
         
         HORSES = tempHorses;
+    }
+    
+    public Map<String, LockedHorse> ConvertHORSES(Map<String, String> HORSES) {
+        return new HashMap<String, LockedHorse>();
     }
 }

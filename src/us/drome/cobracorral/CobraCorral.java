@@ -70,8 +70,30 @@ public class CobraCorral extends JavaPlugin {
                 break;
             case "uncorral":
                 if(sender instanceof Player) {
-                    ((Player)sender).setMetadata(HORSE_UNLOCK, new FixedMetadataValue(this, null));
-                    sender.sendMessage(ChatColor.GRAY + "Right click on a Horse that you own.");
+                    if(args.length > 1 && sender.hasPermission("ccorral.admin")) {
+                        UUID playerID = getServer().getOfflinePlayer(args[0]).getUniqueId();
+                        int target;
+                        int count = 0;
+                        try {
+                            target = Integer.parseInt(args[1]);
+                        } catch (NumberFormatException e) {
+                            sender.sendMessage(ChatColor.GRAY + "Horse ID provided: " + args[1] + ", is not a valid integer.");
+                            return false;
+                        }
+                        for(String key : config.HORSES.keySet()) {
+                            if(config.HORSES.get(key).getOwner().equals(playerID)) {
+                                count++;
+                                if(count == target) {
+                                    LockedHorse lhorse = config.HORSES.get(key);
+                                    config.HORSES.remove(key);
+                                    sender.sendMessage(ChatColor.GRAY + args[0] + "'s horse " + lhorse.getName() + " has been unlocked.");
+                                }
+                            }
+                        }
+                    } else {
+                        ((Player)sender).setMetadata(HORSE_UNLOCK, new FixedMetadataValue(this, null));
+                        sender.sendMessage(ChatColor.GRAY + "Right click on a Horse that you own.");
+                    }
                 } else {
                     sender.sendMessage("That command can only be ran by a Player.");
                 }
