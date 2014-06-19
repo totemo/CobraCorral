@@ -14,6 +14,7 @@ public class LockedHorse implements ConfigurationSerializable {
     private String appearance;
     private String armor;
     private String location;
+    public String ownerName; //Only here for UUID conversion, never saved to file and will be removed from future versions.
     
     public LockedHorse(Horse horse) {
         owner = horse.getOwner().getUniqueId();
@@ -26,7 +27,11 @@ public class LockedHorse implements ConfigurationSerializable {
     }
         
     public LockedHorse(Map<String, Object> map) {
-        owner = UUID.fromString((String)map.get("owner"));
+        try {
+            owner = UUID.fromString((String)map.get("owner"));
+        } catch (IllegalArgumentException e) {
+            ownerName = (String)map.get("owner");
+        }
         name = (String)map.get("name");
         appearance = (String)map.get("appearance");
         armor = (String)map.get("armor");
