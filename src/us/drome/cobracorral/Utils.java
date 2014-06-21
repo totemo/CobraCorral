@@ -122,9 +122,11 @@ public class Utils {
             sender.sendMessage(ChatColor.WHITE + "    aliases:" + ChatColor.GRAY + " /horse-unlock, /hunlock");
             sender.sendMessage(ChatColor.WHITE + "/testdrive" + ChatColor.GRAY + " | Temporarily allow others to ride a locked horse.");
             sender.sendMessage(ChatColor.WHITE + "    aliases:" + ChatColor.GRAY + " /horse-test, /htest");
+            sender.sendMessage(ChatColor.WHITE + "/horse-access: <+/-><player>" + ChatColor.GRAY + " | List, add(+), or remove(-) horse access.");
+            sender.sendMessage(ChatColor.WHITE + "    aliases:" + ChatColor.GRAY + " /haccess, /hacl");
         }
         if(sender.hasPermission("ccorral.free")) {
-            sender.sendMessage(ChatColor.WHITE + "/horse-free" + ChatColor.GRAY + " | Set free any horse you own.");
+            sender.sendMessage(ChatColor.WHITE + "/horse-free" + ChatColor.GRAY + " | Set free any unlocked horse you own.");
             sender.sendMessage(ChatColor.WHITE + "    aliases:" + ChatColor.GRAY + " /hfree");
         }
         if(sender.hasPermission("ccorral.list")) {

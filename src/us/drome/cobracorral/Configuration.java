@@ -38,7 +38,7 @@ public class Configuration {
             plugin.getConfig().createSection("horses");
         }
         HORSES = (Map)plugin.getConfig().getConfigurationSection("horses").getValues(true);
-        if(!HORSES.isEmpty() && !HORSES.get(HORSES.keySet().iterator().next()).ownerName.isEmpty()) {
+        if(!HORSES.isEmpty() && HORSES.get(HORSES.keySet().iterator().next()).ownerName != null) {
             plugin.getLogger().info("Detected non-UUID based horse entries in config. Converting now...");
             convertHORSES();
         }

@@ -64,10 +64,15 @@ commands:
         permission: ccorral.lock
         usage: /testdrive Right click on a locked horse you own.
         aliases: ['horse-test','htest']
+    horse-access:
+        description: View or modify a horse's access list.
+        permission: ccorral.lock
+        usage: /horse-access <+/-><username> Right click on a locked horse you own.
+        aliases: ['haccess','hacl']
     horse-free:
         description: Release a horse from your ownership.
         permission: ccorral.untame
-        usage: /horse-free Right click on a locked horse you own.
+        usage: /horse-free Right click on an unlocked horse you own.
         aliases: ['hfree']
     horse-list:
         description: List all the horses owned by a player

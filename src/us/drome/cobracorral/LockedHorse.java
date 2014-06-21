@@ -1,6 +1,8 @@
 package us.drome.cobracorral;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import org.bukkit.Location;
@@ -14,6 +16,7 @@ public class LockedHorse implements ConfigurationSerializable {
     private String appearance;
     private String armor;
     private String location;
+    public List<UUID> accessList;
     public String ownerName; //Only here for UUID conversion, never saved to file and will be removed from future versions.
     
     public LockedHorse(Horse horse) {
@@ -24,6 +27,7 @@ public class LockedHorse implements ConfigurationSerializable {
         armor = (horse.getInventory().getArmor() != null ? horse.getInventory().getArmor().getType().toString() : "No Armor");
         Location horseLoc = horse.getLocation();
         location = horseLoc.getBlockX() + ":" + horseLoc.getBlockY() + ":" + horseLoc.getBlockZ() + ":" + horseLoc.getWorld().getName();
+        accessList = new ArrayList<>();
     }
         
     public LockedHorse(Map<String, Object> map) {
@@ -36,6 +40,7 @@ public class LockedHorse implements ConfigurationSerializable {
         appearance = (String)map.get("appearance");
         armor = (String)map.get("armor");
         location = (String)map.get("location");
+        accessList = (List<UUID>)map.get("accessList");
     }
     
     public LockedHorse updateHorse(Horse horse) {
@@ -104,6 +109,7 @@ public class LockedHorse implements ConfigurationSerializable {
         map.put("appearance", appearance);
         map.put("armor", armor);
         map.put("location", location);
+        map.put("accessList", accessList);
         return map;
     }
     

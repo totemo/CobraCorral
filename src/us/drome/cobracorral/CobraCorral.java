@@ -2,6 +2,7 @@ package us.drome.cobracorral;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
 import org.bukkit.ChatColor;
@@ -25,6 +26,7 @@ public class CobraCorral extends JavaPlugin {
     public static final String HORSE_LOCK = "CobraCorral.lock";
     public static final String HORSE_UNLOCK = "CobraCorral.unlock";
     public static final String HORSE_FREE = "CobraCorral.free";
+    public static final String HORSE_ACCESS = "CobraCorral.access";
     
     public void onDisable() {
         getLogger().info("version " + getDescription().getVersion() + " has begun unloading...");
@@ -86,6 +88,10 @@ public class CobraCorral extends JavaPlugin {
                                 if(count == target) {
                                     LockedHorse lhorse = config.HORSES.get(key);
                                     config.HORSES.remove(key);
+                                    ((Player)sender).playSound(((Player)sender).getLocation(), Sound.CLICK, 1f, 1f);
+                                    ((Player)sender).playSound(((Player)sender).getLocation(), Sound.ANVIL_USE, 1f, 1f);
+                                    getLogger().info(((Player)sender).getName() + " unlocked " + getServer().getOfflinePlayer(lhorse.getOwner()).getName() +
+                                        "'s horse " + lhorse.getName() + " with UUID " + key);
                                     sender.sendMessage(ChatColor.GRAY + args[0] + "'s horse " + lhorse.getName() + " has been unlocked.");
                                 }
                             }
@@ -106,6 +112,27 @@ public class CobraCorral extends JavaPlugin {
                     sender.sendMessage("That command can only be ran by a Player.");
                 }
                 break;
+            case "horse-access":
+                if(sender instanceof Player) {
+                    if(args.length == 1) {
+                        Character grantRevoke = args[0].charAt(0);
+                        if(grantRevoke == '+' || grantRevoke == '-') {
+                            UUID target = getServer().getOfflinePlayer(args[0].substring(1)).getUniqueId();
+                            HashMap<Character, UUID> accessChange = new HashMap<>();
+                            accessChange.put(grantRevoke, target);
+                            ((Player)sender).setMetadata(HORSE_ACCESS, new FixedMetadataValue(this, accessChange));
+                            sender.sendMessage(ChatColor.GRAY + "Right click on a Horse that you own.");
+                        } else {
+                            return false;
+                        }
+                    } else {
+                        ((Player)sender).setMetadata(HORSE_ACCESS, new FixedMetadataValue(this, null));
+                        sender.sendMessage(ChatColor.GRAY + "Right click on a Horse that you own.");
+                    }
+                } else {
+                    sender.sendMessage("That command can only be ran by a Player.");
+                }
+            break;
             case "horse-free":
                 if(sender instanceof Player) {
                     ((Player)sender).setMetadata(HORSE_FREE, new FixedMetadataValue(this, null));
