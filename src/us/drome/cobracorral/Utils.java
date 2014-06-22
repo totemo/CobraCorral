@@ -1,9 +1,10 @@
 package us.drome.cobracorral;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.UUID;
 import org.bukkit.ChatColor;
 import org.bukkit.Chunk;
-import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Entity;
@@ -19,31 +20,40 @@ public class Utils {
         config = plugin.config;
     }
     
-    /**
-     * Function to locate a horse in an unloaded chunk and return the horse entity.
-     */
-    public Horse getHorse(Location horseLoc, UUID id) {
-        Chunk toLoad = horseLoc.getChunk();
+    /*
+    This method attempts to find and return a Horse entity matching the specified UUID.
+    Using the cached location it attemps to load the chunk at that location and retrieve the entity.
+    If it cannot be found in this chunk it attempts to search every loaded chunk in the world.
+    Under the circumstance of no Horse being found, this method will return null.
+    */
+    public Horse getHorse(LockedHorse lhorse, UUID horseID) {
+        Chunk toLoad = lhorse.getLocation(plugin).getChunk();
         Horse horse = null;
         if(!toLoad.isLoaded()) {
             toLoad.load();
         }
         for(Entity entity : toLoad.getEntities()) {
             if(entity instanceof Horse) {
-                if(entity.getUniqueId().equals(id)) {
-                    horse = (Horse)entity;
+                if(entity.getUniqueId().equals(horseID)) {
+                    return (Horse)entity;
                 }
             }
         }
+        
+        
+        plugin.getLogger().info("Failed to load horse " + horseID + " from chunk at cached location " + lhorse.getLocation() +
+            " for player " + getOwnerName(lhorse.getOwner()) + ", attempting seach of loaded chunks.");
         if(horse == null) {
             for(World world : plugin.getServer().getWorlds()) {
                 for(Entity entity : world.getEntitiesByClass(Horse.class)) {
-                    if(entity.getUniqueId().equals(id)) {
-                        horse = (Horse)entity;
+                    if(entity.getUniqueId().equals(horseID)) {
+                        return (Horse)entity;
                     }
                 }
             }
         }
+        plugin.getLogger().info("Failed to load horse " + horseID + " for player " + getOwnerName(lhorse.getOwner()) +
+            " from any loaded chunk, will use cached location.");
         return horse;
     }
     
@@ -67,18 +77,19 @@ public class Utils {
             return false;
     }
     
-    public void lockHorse(UUID id, Horse horse) {
-        config.HORSES.put(id.toString(), new LockedHorse(horse));
+    public void lockHorse(Horse horse, UUID ownerID) {
+        config.HORSES.put(horse.getUniqueId().toString(), new LockedHorse(horse, ownerID));
     }
     
-    public void unlockHorse(UUID id) {
-        config.HORSES.remove(id.toString());
+    public void unlockHorse(UUID horseID) {
+        config.HORSES.remove(horseID.toString());
     }
     
-    public String getOwnerName(UUID id) {
-        return plugin.getServer().getOfflinePlayer(id).getName();
+    public String getOwnerName(UUID playerID) {
+        return plugin.getServer().getOfflinePlayer(playerID).getName();
     }
     
+    //Clear all meta keys from the player
     public void clearMetaKeys(Player player) {
         if(player.hasMetadata(CobraCorral.HORSE_INFO)) {
             player.removeMetadata(CobraCorral.HORSE_INFO, plugin);
@@ -88,11 +99,14 @@ public class Utils {
             player.removeMetadata(CobraCorral.HORSE_TEST_DRIVE, plugin);
         } else if (player.hasMetadata(CobraCorral.HORSE_UNLOCK)) {
             player.removeMetadata(CobraCorral.HORSE_UNLOCK, plugin);
+        } else if (player.hasMetadata(CobraCorral.HORSE_ACCESS)) {
+            player.removeMetadata(CobraCorral.HORSE_ACCESS, plugin);
         } else if (player.hasMetadata(CobraCorral.HORSE_FREE)) {
             player.removeMetadata(CobraCorral.HORSE_FREE, plugin);
         }
     }
     
+    //Check if player has any of the meta keys used for right click interaction.
     public boolean hasMetaKeys(Player player) {
         if(player.hasMetadata(CobraCorral.HORSE_INFO)) {
             return true;
@@ -102,6 +116,8 @@ public class Utils {
             return true;
         } else if (player.hasMetadata(CobraCorral.HORSE_UNLOCK)) {
             return true;
+        } else if (player.hasMetadata(CobraCorral.HORSE_ACCESS)) {
+            return true;
         } else if (player.hasMetadata(CobraCorral.HORSE_FREE)) {
             return true;
         } else {
@@ -109,6 +125,8 @@ public class Utils {
         }
     }
     
+    
+    //Parsed command help to return to the player/console based on permissions.
     public void helpDisplay(CommandSender sender) {
         sender.sendMessage(ChatColor.GRAY + "=======" + ChatColor.WHITE + "CobraCorral v" + plugin.getDescription().getVersion() +
             " Commands" + ChatColor.GRAY + "=======");

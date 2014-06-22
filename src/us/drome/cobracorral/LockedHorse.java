@@ -16,11 +16,11 @@ public class LockedHorse implements ConfigurationSerializable {
     private String appearance;
     private String armor;
     private String location;
-    public List<UUID> accessList;
+    private List<UUID> accessList;
     public String ownerName; //Only here for UUID conversion, never saved to file and will be removed from future versions.
     
-    public LockedHorse(Horse horse) {
-        owner = horse.getOwner().getUniqueId();
+    public LockedHorse(Horse horse, UUID ownerID) {
+        owner = ownerID;
         name = (horse.getCustomName() != null ? horse.getCustomName() : "NoName");
         appearance = ((horse.getVariant() == Horse.Variant.HORSE) ? horse.getColor().toString() + " " +
                 (horse.getStyle().toString().equalsIgnoreCase("none") ? "" : horse.getStyle().toString()) : horse.getVariant().toString());
@@ -29,7 +29,8 @@ public class LockedHorse implements ConfigurationSerializable {
         location = horseLoc.getBlockX() + ":" + horseLoc.getBlockY() + ":" + horseLoc.getBlockZ() + ":" + horseLoc.getWorld().getName();
         accessList = new ArrayList<>();
     }
-        
+    
+    //Constructor for de-serialization on loading from config.yml    
     public LockedHorse(Map<String, Object> map) {
         try {
             owner = UUID.fromString((String)map.get("owner"));
@@ -40,7 +41,13 @@ public class LockedHorse implements ConfigurationSerializable {
         appearance = (String)map.get("appearance");
         armor = (String)map.get("armor");
         location = (String)map.get("location");
-        accessList = (List<UUID>)map.get("accessList");
+        List<String> aclTemp = (List<String>)map.get("accessList");
+        accessList = new ArrayList<>();
+        if(aclTemp != null && !aclTemp.isEmpty()) {
+            for(String value : aclTemp) {
+                accessList.add(UUID.fromString(value));
+            }
+        }
     }
     
     public LockedHorse updateHorse(Horse horse) {
@@ -101,6 +108,42 @@ public class LockedHorse implements ConfigurationSerializable {
         return location.split(":")[3];
     }
     
+    /*
+    Access List methods.
+    */
+    public boolean grantAccess(UUID player) {
+        if(accessList.contains(player)) {
+            return false;
+        } else {
+            accessList.add(player);
+            return true;
+        }
+    }
+    
+    public boolean revokeAccess(UUID player) {
+        if(accessList.contains(player)) {
+            accessList.remove(player);
+            return true;
+        } else {
+            return false;
+        }
+    }
+    
+    public boolean hasAccess(UUID player) {
+        if(accessList.contains(player)) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+    
+    public List<UUID> getAccessList() {
+        return accessList;
+    }
+    
+    /*
+    Methods below are used for ConfigurationSerializable support
+    */
     @Override
     public Map<String, Object> serialize() {
         Map<String, Object> map = new HashMap<>();
@@ -109,7 +152,13 @@ public class LockedHorse implements ConfigurationSerializable {
         map.put("appearance", appearance);
         map.put("armor", armor);
         map.put("location", location);
-        map.put("accessList", accessList);
+        List<String> aclTemp = new ArrayList<>();
+        if(accessList != null && !accessList.isEmpty()) {
+            for(UUID value : accessList) {
+                aclTemp.add(value.toString());
+            }
+        }
+        map.put("accessList", aclTemp);
         return map;
     }
     

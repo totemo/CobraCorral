@@ -25,8 +25,8 @@ public class CobraCorral extends JavaPlugin {
     public static final String HORSE_INFO = "CobraCorral.info";
     public static final String HORSE_LOCK = "CobraCorral.lock";
     public static final String HORSE_UNLOCK = "CobraCorral.unlock";
-    public static final String HORSE_FREE = "CobraCorral.free";
     public static final String HORSE_ACCESS = "CobraCorral.access";
+    public static final String HORSE_FREE = "CobraCorral.free";
     
     public void onDisable() {
         getLogger().info("version " + getDescription().getVersion() + " has begun unloading...");
@@ -114,14 +114,17 @@ public class CobraCorral extends JavaPlugin {
                 break;
             case "horse-access":
                 if(sender instanceof Player) {
-                    if(args.length == 1) {
+                    if(args.length > 0) {
                         Character grantRevoke = args[0].charAt(0);
-                        if(grantRevoke == '+' || grantRevoke == '-') {
-                            UUID target = getServer().getOfflinePlayer(args[0].substring(1)).getUniqueId();
-                            HashMap<Character, UUID> accessChange = new HashMap<>();
-                            accessChange.put(grantRevoke, target);
-                            ((Player)sender).setMetadata(HORSE_ACCESS, new FixedMetadataValue(this, accessChange));
-                            sender.sendMessage(ChatColor.GRAY + "Right click on a Horse that you own.");
+                        if((grantRevoke == '+' || grantRevoke == '-') && args[0].length() > 1) {
+                            if(!getServer().getOfflinePlayer(args[0].substring(1)).hasPlayedBefore()) {
+                                sender.sendMessage(ChatColor.GRAY + "You must specify a player that has logged on before.");
+                                return true;
+                            } else {
+                                String data = grantRevoke.toString() + getServer().getOfflinePlayer(args[0].substring(1)).getUniqueId().toString();
+                                ((Player)sender).setMetadata(HORSE_ACCESS, new FixedMetadataValue(this, data));
+                                sender.sendMessage(ChatColor.GRAY + "Right click on a Horse that you own.");
+                            }
                         } else {
                             return false;
                         }
@@ -154,12 +157,9 @@ public class CobraCorral extends JavaPlugin {
                         if(config.HORSES.get(key).getOwner().equals(playerID)) {
                             count++;
                             LockedHorse lhorse = config.HORSES.get(key);
-                            Horse horse = utils.getHorse(lhorse.getLocation(this), UUID.fromString(key));
+                            Horse horse = utils.getHorse(lhorse, UUID.fromString(key));
                             if(horse != null) {
                                 config.HORSES.put(key, lhorse.updateHorse(horse));
-                            } else {
-                                getLogger().info("Failed to load horse " + key.toString() + " from chunk at location " + lhorse.getLocation() +
-                                    " for player " + utils.getOwnerName(playerID) + ", using cache.");
                             }
                             response.add(String.valueOf(count) + ChatColor.GRAY + " | " + lhorse.getName() + " | " + lhorse.getAppearance() +
                                 " | " + lhorse.getArmor() + " | " + lhorse.getWorld());
@@ -203,7 +203,7 @@ public class CobraCorral extends JavaPlugin {
                                 }
                             } else { 
                                 sender.sendMessage(ChatColor.RED + "You do not have permission to do that.");
-                                break;
+                                return true;
                             }   
                         } else {
                             try {
@@ -219,12 +219,9 @@ public class CobraCorral extends JavaPlugin {
                                 count++;
                                 if(count == target) {
                                     LockedHorse lhorse = config.HORSES.get(key);
-                                    Horse horse = utils.getHorse(lhorse.getLocation(this), UUID.fromString(key));
+                                    Horse horse = utils.getHorse(lhorse, UUID.fromString(key));
                                     if(horse != null) {
                                         config.HORSES.put(key, lhorse.updateHorse(horse));
-                                    } else {
-                                        getLogger().info("Failed to load horse " + key + " from chunk at location " +
-                                            lhorse.getLocation() + " for player " + utils.getOwnerName(playerID) + ", using cache.");
                                     }
                                     
                                     Player player = (Player)sender;
@@ -277,7 +274,7 @@ public class CobraCorral extends JavaPlugin {
                                 count++;
                                 if(count == target) {
                                     LockedHorse lhorse = config.HORSES.get(key);
-                                    Horse horse = utils.getHorse(lhorse.getLocation(this), UUID.fromString(key));
+                                    Horse horse = utils.getHorse(lhorse, UUID.fromString(key));
                                     if(horse != null) {
                                         config.HORSES.put(key, lhorse.updateHorse(horse));
                                         if (!horse.getLocation().getWorld().equals(((Player)sender).getWorld())) {
@@ -290,7 +287,6 @@ public class CobraCorral extends JavaPlugin {
                                             sender.sendMessage(ChatColor.GRAY + lhorse.getName() + " " + lhorse.getAppearance() +
                                                 " has been teleported to your location!");
                                             horse.teleport(((Player)sender).getLocation());
-
                                         } else {
                                             String passenger = horse.getPassenger() instanceof Player ? ((Player)horse.getPassenger()).getName() : horse.getPassenger().toString();
                                             sender.sendMessage(ChatColor.GRAY + lhorse.getName() + " " + lhorse.getAppearance() +
@@ -299,8 +295,7 @@ public class CobraCorral extends JavaPlugin {
 
                                     } else {
                                         sender.sendMessage(ChatColor.GRAY + "That horse failed to load, please try again.");
-                                        getLogger().info("Failed to load horse " + key + " from chunk at location " +
-                                            lhorse.getLocation() + " for player " + utils.getOwnerName(playerID) + ", cancelling teleport.");
+                                        getLogger().info("Failed to load horse " + key + " for player " + utils.getOwnerName(playerID) + ", cancelling teleport.");
                                     }
                                     return true;
                                 }
