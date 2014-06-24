@@ -3,6 +3,7 @@ package us.drome.cobracorral;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.UUID;
 import org.bukkit.ChatColor;
@@ -82,12 +83,14 @@ public class CobraCorral extends JavaPlugin {
                             sender.sendMessage(ChatColor.GRAY + "Horse ID provided: " + args[1] + ", is not a valid integer.");
                             return false;
                         }
-                        for(String key : config.HORSES.keySet()) {
+                        Iterator<String> iterator = config.HORSES.keySet().iterator();
+                        while(iterator.hasNext()) {
+                            String key = iterator.next();
                             if(config.HORSES.get(key).getOwner().equals(playerID)) {
                                 count++;
                                 if(count == target) {
                                     LockedHorse lhorse = config.HORSES.get(key);
-                                    config.HORSES.remove(key);
+                                    iterator.remove();
                                     ((Player)sender).playSound(((Player)sender).getLocation(), Sound.CLICK, 1f, 1f);
                                     ((Player)sender).playSound(((Player)sender).getLocation(), Sound.ANVIL_USE, 1f, 1f);
                                     getLogger().info(((Player)sender).getName() + " unlocked " + getServer().getOfflinePlayer(lhorse.getOwner()).getName() +
