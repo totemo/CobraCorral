@@ -3,3 +3,8 @@ immortality: true
 auto-lock: true
 immortal-cooldown: false
 cooldown-time: 5
+database:
+    backend: config
+    uri: localhost:3306
+    username:
+    password:

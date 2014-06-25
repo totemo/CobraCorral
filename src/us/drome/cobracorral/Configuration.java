@@ -16,6 +16,7 @@ public class Configuration {
     public boolean IMMORTAL_COOLDOWN;
     public int COOLDOWN_TIME;
     public Map<String, LockedHorse> HORSES;
+    public String BACKEND;
     
     public Configuration(CobraCorral plugin) {
         this.plugin = plugin;
@@ -27,6 +28,34 @@ public class Configuration {
     }
     
     public void load() {
+        reload();
+        
+        BACKEND = plugin.getConfig().getString("database.backend", "config");
+        switch (BACKEND.toLowerCase()) {
+            case "config":
+                if(!plugin.getConfig().contains("horses")) {
+                    plugin.getConfig().createSection("horses");
+                }
+                HORSES = (Map)plugin.getConfig().getConfigurationSection("horses").getValues(true);
+                if(!HORSES.isEmpty() && HORSES.get(HORSES.keySet().iterator().next()).ownerName != null) {
+                    plugin.getLogger().info("Detected non-UUID based horse entries in config. Converting now...");
+                    convertHORSES();
+                }
+                break;
+            case "mysql":
+                break;
+            case "sqlite":
+                break;
+            default:
+                plugin.getLogger().warning("No valid backend option set in config.yml. Must be config, mysql, or sqlite.");
+                plugin.getServer().getPluginManager().disablePlugin(plugin);
+                break;
+        }
+    }
+    
+    public void reload() {
+        Map<String, LockedHorse> tempHorses = ((BACKEND != null && BACKEND.equalsIgnoreCase("config")) ? HORSES : null);
+
         plugin.reloadConfig();
         
         MAX_HORSES = plugin.getConfig().getInt("max-horses", 2);
@@ -34,22 +63,9 @@ public class Configuration {
         AUTO_LOCK = plugin.getConfig().getBoolean("auto-lock", true);
         IMMORTAL_COOLDOWN = plugin.getConfig().getBoolean("immortal-cooldown", false);
         COOLDOWN_TIME = plugin.getConfig().getInt("cooldown-time", 0);
-        if(!plugin.getConfig().contains("horses")) {
-            plugin.getConfig().createSection("horses");
-        }
-        HORSES = (Map)plugin.getConfig().getConfigurationSection("horses").getValues(true);
-        if(!HORSES.isEmpty() && HORSES.get(HORSES.keySet().iterator().next()).ownerName != null) {
-            plugin.getLogger().info("Detected non-UUID based horse entries in config. Converting now...");
-            convertHORSES();
-        }
-    }
-    
-    public void reload() {
-        Map<String, LockedHorse> tempHorses = HORSES;
-
-        load();
         
-        HORSES = tempHorses;
+        if(BACKEND != null && BACKEND.equalsIgnoreCase("config"))
+            HORSES = tempHorses;
     }
     
     public void convertHORSES() {
