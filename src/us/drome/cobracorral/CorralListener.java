@@ -3,11 +3,9 @@ package us.drome.cobracorral;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
-import org.bukkit.OfflinePlayer;
 import org.bukkit.Sound;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Horse;
@@ -92,12 +90,16 @@ public class CorralListener implements Listener {
                     if(player.equals(horse.getOwner())) {
                         if(!utils.maxHorsesLocked(player.getUniqueId())) {
                             if(!utils.isHorseLocked(horse)) {
-                                utils.lockHorse(horse, player.getUniqueId());
-                                player.sendMessage(ChatColor.GRAY + (horse.getCustomName() != null ?
-                                    horse.getCustomName() : horse.getVariant().toString()) + " has been locked.");
-                                player.playSound(player.getLocation(), Sound.CLICK, 1f, 1f);
-                                plugin.getLogger().info(player.getName() + " locked " + (horse.getCustomName() != null ?
-                                    horse.getCustomName() : horse.getVariant().toString()) + " with UUID " + horse.getUniqueId().toString());
+                                if(!config.PROTECT_CHESTS && horse.getVariant().equals(Horse.Variant.DONKEY) || horse.getVariant().equals(Horse.Variant.MULE) && horse.isCarryingChest()) {
+                                    player.sendMessage(ChatColor.GRAY + "You are not allowed to lock a " + horse.getVariant().name().toLowerCase() + " with a chest.");
+                                } else {
+                                    utils.lockHorse(horse, player.getUniqueId());
+                                    player.sendMessage(ChatColor.GRAY + (horse.getCustomName() != null ?
+                                        horse.getCustomName() : horse.getVariant().toString()) + " has been locked.");
+                                    player.playSound(player.getLocation(), Sound.CLICK, 1f, 1f);
+                                    plugin.getLogger().info(player.getName() + " locked " + (horse.getCustomName() != null ?
+                                        horse.getCustomName() : horse.getVariant().toString()) + " with UUID " + horse.getUniqueId().toString());
+                                }
                             } else {
                                 player.sendMessage(ChatColor.GRAY + (horse.getCustomName() != null ?
                                     horse.getCustomName() : horse.getVariant().toString()) + " is already locked.");
@@ -272,6 +274,10 @@ public class CorralListener implements Listener {
                 No Meta Keys Method    
                 */
                 } else if (utils.isHorseLocked(horse)) {
+                    if(!config.PROTECT_CHESTS && horse.getVariant().equals(Horse.Variant.DONKEY) || horse.getVariant().equals(Horse.Variant.MULE) && player.getItemInHand().getType().equals(Material.CHEST)) {
+                        player.sendMessage(ChatColor.GRAY + "You are not allowed to add a chest to locked " + horse.getVariant().name().toLowerCase() + "s.");
+                        event.setCancelled(true);
+                    }
                     LockedHorse lhorse = config.HORSES.get(horse.getUniqueId().toString());
                     if(!player.equals(horse.getOwner())) {
                         if(horse.hasMetadata(CobraCorral.HORSE_TEST_DRIVE) || config.HORSES.get(horse.getUniqueId().toString()).hasAccess(player.getUniqueId())){
@@ -403,7 +409,7 @@ public class CorralListener implements Listener {
                     config.HORSES.get(((Horse)entity).getUniqueId().toString()).updateHorse((Horse)entity);
                     LockedHorse lhorse = plugin.config.HORSES.get(entity.getUniqueId().toString());
                     plugin.config.HORSES.put(entity.getUniqueId().toString(), lhorse.updateHorse((Horse)entity));
-                    plugin.getLogger().info("DEBUG: Updated horse " + entity.getUniqueId() + " to Location: " + lhorse.getLocation());
+                    //plugin.getLogger().info("DEBUG: Updated horse " + entity.getUniqueId() + " to Location: " + lhorse.getLocation());
                 }
             }
         }

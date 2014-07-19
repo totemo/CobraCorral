@@ -3,3 +3,4 @@ immortality: true
 auto-lock: true
 immortal-cooldown: false
 cooldown-time: 5
+protect-chests: true
