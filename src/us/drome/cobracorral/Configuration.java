@@ -15,8 +15,9 @@ public class Configuration {
     public boolean AUTO_LOCK;
     public boolean IMMORTAL_COOLDOWN;
     public int COOLDOWN_TIME;
+    public boolean PROTECT_CHESTS;
+    public String BACKEND; //For future use with databases.
     public Map<String, LockedHorse> HORSES;
-    public String BACKEND;
     
     public Configuration(CobraCorral plugin) {
         this.plugin = plugin;
@@ -30,7 +31,7 @@ public class Configuration {
     public void load() {
         reload();
         
-        BACKEND = plugin.getConfig().getString("database.backend", "config");
+        BACKEND = "config"; //plugin.getConfig().getString("database.backend", "config");
         switch (BACKEND.toLowerCase()) {
             case "config":
                 if(!plugin.getConfig().contains("horses")) {
@@ -63,6 +64,7 @@ public class Configuration {
         AUTO_LOCK = plugin.getConfig().getBoolean("auto-lock", true);
         IMMORTAL_COOLDOWN = plugin.getConfig().getBoolean("immortal-cooldown", false);
         COOLDOWN_TIME = plugin.getConfig().getInt("cooldown-time", 0);
+        PROTECT_CHESTS = plugin.getConfig().getBoolean("protect-chests", true);
         
         if(BACKEND != null && BACKEND.equalsIgnoreCase("config"))
             HORSES = tempHorses;
