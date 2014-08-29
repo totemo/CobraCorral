@@ -87,13 +87,13 @@ public class CorralListener implements Listener {
                 HORSE_LOCK Method
                 */
                 if(player.hasMetadata(CobraCorral.HORSE_LOCK)) {
-                    if(player.equals(horse.getOwner())) {
-                        if(!utils.maxHorsesLocked(player.getUniqueId())) {
+                    if(player.equals(horse.getOwner()) || player.hasPermission("ccorral.admin")) {
+                        if(!utils.maxHorsesLocked(horse.getOwner().getUniqueId())) {
                             if(!utils.isHorseLocked(horse)) {
                                 if(!config.PROTECT_CHESTS && horse.getVariant().equals(Horse.Variant.DONKEY) || horse.getVariant().equals(Horse.Variant.MULE) && horse.isCarryingChest()) {
                                     player.sendMessage(ChatColor.GRAY + "You are not allowed to lock a " + horse.getVariant().name().toLowerCase() + " with a chest.");
                                 } else {
-                                    utils.lockHorse(horse, player.getUniqueId());
+                                    utils.lockHorse(horse, horse.getOwner().getUniqueId());
                                     player.sendMessage(ChatColor.GRAY + (horse.getCustomName() != null ?
                                         horse.getCustomName() : horse.getVariant().toString()) + " has been locked.");
                                     player.playSound(player.getLocation(), Sound.CLICK, 1f, 1f);

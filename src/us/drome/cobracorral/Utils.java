@@ -160,7 +160,7 @@ public class Utils {
             sender.sendMessage(ChatColor.WHITE + "/horse-gps <player> <horseID>" + ChatColor.GRAY + " | Locate a player's horse.");
         }
         if(sender.hasPermission("ccorral.tp")) {
-            sender.sendMessage(ChatColor.WHITE + "/horse-tp <player> <horseID>" + ChatColor.GRAY + " | Telelport a horse to you.");
+            sender.sendMessage(ChatColor.WHITE + "/horse-tp <player> <horseID>" + ChatColor.GRAY + " | Teleport a horse to you.");
             sender.sendMessage(ChatColor.WHITE + "    aliases:" + ChatColor.GRAY + " /htp");
         }
         if(sender.hasPermission("ccorral.info")) {
