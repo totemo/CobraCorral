@@ -148,9 +148,22 @@ public class CobraCorral extends JavaPlugin {
                 break;
             case "horse-list":
                 if(sender instanceof Player) {
-                   UUID playerID = ((Player)sender).getUniqueId();
-                    if(args.length > 0 && (sender.hasPermission("ccorral.list-all") || sender.hasPermission("ccorral.admin"))) {
-                        playerID = getServer().getOfflinePlayer(args[0]).getUniqueId();
+                    UUID playerID = ((Player)sender).getUniqueId();
+                    int page = 1;
+                    if(args.length > 0) {
+                        if(args[0].length() < 3) {
+                            try {
+                                page = Integer.parseInt(args[0]);
+                            } catch (NumberFormatException e) { }
+                        } else if (sender.hasPermission("ccorral.list-all") || sender.hasPermission("ccorral.admin")) {
+                            playerID = getServer().getOfflinePlayer(args[0]).getUniqueId();
+                            if(args.length > 1) {
+                                try {
+                                    page = Integer.parseInt(args[1]);
+                                } catch (NumberFormatException e) { }
+                            }
+                        }
+                        
                     }
                     List<String> response = new ArrayList<>();
 
@@ -167,11 +180,11 @@ public class CobraCorral extends JavaPlugin {
                                 " | " + lhorse.getArmor() + " | " + lhorse.getWorld());
                         }
                     }
-                    
+
                     if(!response.isEmpty()) {
                         response.add(0, ChatColor.GRAY + "Horses locked by " +
                             (playerID.equals(((Player)sender).getUniqueId()) ? "you" : utils.getOwnerName(playerID)) + ":");
-                        for(String line : response) {
+                        for(String line : utils.pagifyOutput(response, page)) {
                             sender.sendMessage(line);
                         }
                     } else {

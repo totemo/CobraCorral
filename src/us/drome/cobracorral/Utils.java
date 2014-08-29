@@ -1,5 +1,7 @@
 package us.drome.cobracorral;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 import org.bukkit.ChatColor;
 import org.bukkit.Chunk;
@@ -146,7 +148,7 @@ public class Utils {
             sender.sendMessage(ChatColor.WHITE + "    aliases:" + ChatColor.GRAY + " /hfree");
         }
         if(sender.hasPermission("ccorral.list")) {
-            sender.sendMessage(ChatColor.WHITE + "/horse-list" + ChatColor.GRAY + " | List all horses you have locked.");
+            sender.sendMessage(ChatColor.WHITE + "/horse-list <page>" + ChatColor.GRAY + " | List all horses you have locked.");
             sender.sendMessage(ChatColor.WHITE + "    aliases:" + ChatColor.GRAY + " /hlist");
         }
         if(sender.hasPermission("ccorral.list-all")) {
@@ -167,5 +169,24 @@ public class Utils {
             sender.sendMessage(ChatColor.WHITE + "/horse-info" + ChatColor.GRAY + " | Display owner and lock status of a horse.");
             sender.sendMessage(ChatColor.WHITE + "    aliases:" + ChatColor.GRAY + " /hinfo");
         }
+    }
+    
+    //Parse inputed string list into a page of no more than 10 lines which is the max capacity of MC chat
+    public List<String> pagifyOutput(List<String> unparsed, int page) {
+        page = (page == 0) ? 1 : page;
+        int maxPage = (int)Math.ceil(unparsed.size() / 9d);
+        page = (page > maxPage) ? maxPage : page;
+        List<String> pagified = new ArrayList<>();
+        
+        if((unparsed.size() / 9) >= (page - 1)) {
+            int firstOnPage = (page - 1) * 9;
+            pagified = unparsed.subList(firstOnPage, firstOnPage + ((unparsed.size() / 9 < page) ? (unparsed.size() % 9) : 9));
+            if(page > 1) {
+                pagified.add(0, unparsed.get(0)); //Add the header.
+            }
+            pagified.add(ChatColor.GRAY + "Displaying page " + page + " of " + maxPage); //Add the footer.
+        }
+        
+        return pagified;
     }
 }
