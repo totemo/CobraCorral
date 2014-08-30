@@ -187,27 +187,27 @@ public class CorralListener implements Listener {
                 } else if (player.hasMetadata(CobraCorral.HORSE_FREE)) {
                     if(player.equals(horse.getOwner()) || player.hasPermission("ccorral.admin")) {
                         if(utils.isHorseLocked(horse)) {
-                            player.sendMessage(ChatColor.GRAY + "That horse must be unlocked before it can be set free.");
-                        } else {
-                            plugin.getLogger().info(player.getName() + " set free " + horse.getOwner().getName() + "'s horse " +
-                                horse.getVariant().toString() + " with UUID " + horse.getUniqueId().toString());
-                            for(ItemStack item : horse.getInventory().getContents()) {
-                                if(item != null) {
-                                    horse.getWorld().dropItemNaturally(horse.getLocation(), item);
-                                    horse.getInventory().remove(item);
-                                }
-                            }
-                            if(horse.isCarryingChest()) {
-                                horse.setCarryingChest(false);
-                                horse.getWorld().dropItemNaturally(horse.getLocation(), new ItemStack(Material.CHEST));
-                            }
-                            horse.setOwner(null);
-                            horse.setTamed(false);
-                            horse.setCustomName(null);
-                            player.sendMessage(ChatColor.GRAY + horse.getVariant().toString() + " has been set free.");
-                            player.playSound(player.getLocation(), Sound.CLICK, 1f, 1f);
-                            player.playSound(player.getLocation(), Sound.ANVIL_USE, 1f, 1f);
+                            utils.unlockHorse(horse.getUniqueId());
+                            player.sendMessage(ChatColor.GRAY + horse.getVariant().toString() + " automatically unlocked...");
                         }
+                        plugin.getLogger().info(player.getName() + " set free " + horse.getOwner().getName() + "'s horse " +
+                            horse.getVariant().toString() + " with UUID " + horse.getUniqueId().toString());
+                        for(ItemStack item : horse.getInventory().getContents()) {
+                            if(item != null) {
+                                horse.getWorld().dropItemNaturally(horse.getLocation(), item);
+                                horse.getInventory().remove(item);
+                            }
+                        }
+                        if(horse.isCarryingChest()) {
+                            horse.setCarryingChest(false);
+                            horse.getWorld().dropItemNaturally(horse.getLocation(), new ItemStack(Material.CHEST));
+                        }
+                        horse.setOwner(null);
+                        horse.setTamed(false);
+                        horse.setCustomName(null);
+                        player.sendMessage(ChatColor.GRAY + horse.getVariant().toString() + " has been set free.");
+                        player.playSound(player.getLocation(), Sound.CLICK, 1f, 1f);
+                        player.playSound(player.getLocation(), Sound.ANVIL_USE, 1f, 1f);
                     } else {
                         player.sendMessage(ChatColor.GRAY + "You do not own that horse.");
                         player.playSound(player.getLocation(), Sound.ITEM_BREAK, 1f, 1f); 

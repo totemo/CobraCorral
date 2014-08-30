@@ -1,5 +1,5 @@
 name: CobraCorral
-version: 1.1.4
+version: 1.1.5
 author: TheAcademician
 main: us.drome.cobracorral.CobraCorral
 
@@ -71,8 +71,8 @@ commands:
         aliases: ['haccess','hacl']
     horse-free:
         description: Release a horse from your ownership.
-        permission: ccorral.untame
-        usage: /horse-free Right click on an unlocked horse you own.
+        permission: ccorral.free
+        usage: /horse-free Right click on a horse you own.
         aliases: ['hfree']
     horse-list:
         description: List all the horses owned by a player
