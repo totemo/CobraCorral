@@ -90,7 +90,7 @@ public class CorralListener implements Listener {
                     if(player.equals(horse.getOwner()) || player.hasPermission("ccorral.admin")) {
                         if(!utils.maxHorsesLocked(horse.getOwner().getUniqueId())) {
                             if(!utils.isHorseLocked(horse)) {
-                                if(!config.PROTECT_CHESTS && horse.getVariant().equals(Horse.Variant.DONKEY) || horse.getVariant().equals(Horse.Variant.MULE) && horse.isCarryingChest()) {
+                                if(!config.PROTECT_CHESTS && (horse.getVariant().equals(Horse.Variant.DONKEY) || horse.getVariant().equals(Horse.Variant.MULE) && horse.isCarryingChest())) {
                                     player.sendMessage(ChatColor.GRAY + "You are not allowed to lock a " + horse.getVariant().name().toLowerCase() + " with a chest.");
                                 } else {
                                     utils.lockHorse(horse, horse.getOwner().getUniqueId());
@@ -274,7 +274,7 @@ public class CorralListener implements Listener {
                 No Meta Keys Method    
                 */
                 } else if (utils.isHorseLocked(horse)) {
-                    if(!config.PROTECT_CHESTS && horse.getVariant().equals(Horse.Variant.DONKEY) || horse.getVariant().equals(Horse.Variant.MULE) && player.getItemInHand().getType().equals(Material.CHEST)) {
+                    if(!config.PROTECT_CHESTS && (horse.getVariant().equals(Horse.Variant.DONKEY) || horse.getVariant().equals(Horse.Variant.MULE)) && player.getItemInHand().getType().equals(Material.CHEST)) {
                         player.sendMessage(ChatColor.GRAY + "You are not allowed to add a chest to locked " + horse.getVariant().name().toLowerCase() + "s.");
                         event.setCancelled(true);
                     }
