@@ -1,5 +1,6 @@
 name: CobraCorral
-version: 1.1.4
+version: ${project.version}
+description: ${project.description}
 author: TheAcademician
 main: us.drome.cobracorral.CobraCorral
 
@@ -16,6 +17,7 @@ permissions:
             ccorral.gps-all: true
             ccorral.tp: true
             ccorral.info: true
+            ccorral.bypass: true
     ccorral.help:
         description: Show command reference
         default: true
@@ -42,6 +44,9 @@ permissions:
         default: op
     ccorral.info:
         description: List information for a specified horse.
+        default: true
+    ccorral.bypass:
+        description: Allows someone to bypass all horse access restrictions.
         default: op
 
 commands:
@@ -82,15 +87,25 @@ commands:
     horse-gps:
         description: Locate a horse that you own.
         permission: ccorral.gps
-        usage: /horse-gps [<player>] <horse#>
+        usage: /horse-gps <horse#/name>
         aliases: ['hgps']
     horse-tp:
         description: Teleport a horse to your location
         permission: ccorral.tp
-        usage: /horse-tp [<player>] <horse#>
+        usage: /horse-tp [<player>] <horse#/name>
         aliases: ['htp']
     horse-info:
         description: List information for a specified horse.
         permission: ccorral.info
         usage: /horse-info Right click on a horse.
         aliases: ['hinfo']
+    horse-name:
+        description: Nickname a locked horse.
+        permission: ccorral.lock
+        usage: /horse-name [<name>] Right click on horse.
+        aliases: ['hname']
+    horse-bypass:
+        description: Toggle ability to bypass horse access restrictions.
+        permission: ccorral.bypass
+        usage: /horse-bypass
+        aliases: ['hbypass']

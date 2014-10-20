@@ -1,12 +1,21 @@
 package us.drome.cobracorral;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
+import net.minecraft.server.v1_7_R4.EntityHorse;
+import net.minecraft.server.v1_7_R4.NBTBase;
+import net.minecraft.server.v1_7_R4.NBTTagCompound;
+import net.minecraft.server.v1_7_R4.NBTTagList;
 import org.bukkit.ChatColor;
 import org.bukkit.Chunk;
+import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.command.CommandSender;
+import org.bukkit.craftbukkit.v1_7_R4.CraftWorld;
+import org.bukkit.craftbukkit.v1_7_R4.entity.CraftHorse;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Horse;
 import org.bukkit.entity.Player;
@@ -26,7 +35,7 @@ public class Utils {
     If it cannot be found in this chunk it attempts to search every loaded chunk in the world.
     Under the circumstance of no Horse being found, this method will return null.
     */
-    public Horse getHorse(LockedHorse lhorse, UUID horseID) {
+    public Horse getHorse(LockedHorse lhorse) {
         Chunk toLoad = lhorse.getLocation(plugin).getChunk();
         Horse horse = null;
         if(!toLoad.isLoaded()) {
@@ -34,31 +43,31 @@ public class Utils {
         }
         for(Entity entity : toLoad.getEntities()) {
             if(entity instanceof Horse) {
-                if(entity.getUniqueId().equals(horseID)) {
+                if(entity.getUniqueId().equals(lhorse.getUUID())) {
                     return (Horse)entity;
                 }
             }
         }
         
         
-        plugin.getLogger().info("Failed to load horse " + horseID + " from chunk at cached location " + lhorse.getLocation() +
+        plugin.getLogger().info("Failed to load horse " + lhorse.getUUID() + " from chunk at cached location " + lhorse.getLocation() +
             " for player " + getOwnerName(lhorse.getOwner()) + ", attempting seach of loaded chunks.");
         if(horse == null) {
             for(World world : plugin.getServer().getWorlds()) {
                 for(Entity entity : world.getEntitiesByClass(Horse.class)) {
-                    if(entity.getUniqueId().equals(horseID)) {
+                    if(entity.getUniqueId().equals(lhorse.getUUID())) {
                         return (Horse)entity;
                     }
                 }
             }
         }
-        plugin.getLogger().info("Failed to load horse " + horseID + " for player " + getOwnerName(lhorse.getOwner()) +
+        plugin.getLogger().info("Failed to load horse " + lhorse.getUUID() + " for player " + getOwnerName(lhorse.getOwner()) +
             " from any loaded chunk, will use cached location.");
         return horse;
     }
     
     public boolean isHorseLocked(Horse horse) {
-        return (config.HORSES.containsKey(horse.getUniqueId().toString()) ? true : false);
+        return (config.Database.contains(horse.getUniqueId()));
     }
     
     public boolean maxHorsesLocked(UUID playerID) {
@@ -66,8 +75,10 @@ public class Utils {
             return false;
         }
         int count = 0;
-        for(String key : config.HORSES.keySet()) {
-            if(config.HORSES.get(key).getOwner().equals(playerID)) {
+        Set<LockedHorse> horses = config.Database.getHorses(playerID);
+        Iterator<LockedHorse> horseIterator = horses.iterator();
+        while(horseIterator.hasNext()) {
+            if(horseIterator.next().getOwner().equals(playerID)) {
                 count++;
             }
         }
@@ -78,11 +89,32 @@ public class Utils {
     }
     
     public void lockHorse(Horse horse, UUID ownerID) {
-        config.HORSES.put(horse.getUniqueId().toString(), new LockedHorse(horse, ownerID));
+        config.Database.addHorse(horse, ownerID);
     }
     
     public void unlockHorse(UUID horseID) {
-        config.HORSES.remove(horseID.toString());
+        config.Database.removeHorse(horseID);
+    }
+    
+    public void updateHorse(LockedHorse lhorse, Horse horse) {
+        lhorse.updateHorse(horse);
+        config.Database.updateHorse(lhorse);
+    }
+    
+    public boolean grantAccess(LockedHorse lhorse, UUID playerID) {
+        if(lhorse.grantAccess(playerID)) {
+            config.Database.addAccess(lhorse.getUUID(), playerID);
+            return true;
+        }
+        return false;
+    }
+    
+    public boolean revokeAccess(LockedHorse lhorse, UUID playerID) {
+        if(lhorse.revokeAccess(playerID)) {
+            config.Database.removeAccess(lhorse.getUUID(), playerID);
+            return true;
+        }
+        return false;
     }
     
     public String getOwnerName(UUID playerID) {
@@ -103,6 +135,8 @@ public class Utils {
             player.removeMetadata(CobraCorral.HORSE_ACCESS, plugin);
         } else if (player.hasMetadata(CobraCorral.HORSE_FREE)) {
             player.removeMetadata(CobraCorral.HORSE_FREE, plugin);
+        } else if (player.hasMetadata(CobraCorral.HORSE_NAME)) {
+            player.removeMetadata(CobraCorral.HORSE_NAME, plugin);
         }
     }
     
@@ -120,6 +154,8 @@ public class Utils {
             return true;
         } else if (player.hasMetadata(CobraCorral.HORSE_FREE)) {
             return true;
+        } else if (player.hasMetadata(CobraCorral.HORSE_NAME)) {
+            return true;
         } else {
             return false;
         }
@@ -135,7 +171,7 @@ public class Utils {
             sender.sendMessage(ChatColor.WHITE + "    aliases:" + ChatColor.GRAY + " /horse-lock, /hlock");
             sender.sendMessage(ChatColor.WHITE + "/uncorral" + ChatColor.GRAY + " | Used to unlock a horse you have tamed.");
             if(sender.hasPermission("ccorral.admin")) {
-               sender.sendMessage(ChatColor.WHITE + "/uncorral <player> <horseID>" + ChatColor.GRAY + " | Remotely unlock a specific horse."); 
+               sender.sendMessage(ChatColor.WHITE + "/uncorral <player> <horseID/name>" + ChatColor.GRAY + " | Remotely unlock a specific horse."); 
             }
             sender.sendMessage(ChatColor.WHITE + "    aliases:" + ChatColor.GRAY + " /horse-unlock, /hunlock");
             sender.sendMessage(ChatColor.WHITE + "/testdrive" + ChatColor.GRAY + " | Temporarily allow others to ride a locked horse.");
@@ -155,19 +191,26 @@ public class Utils {
             sender.sendMessage(ChatColor.WHITE + "/horse-list <player>" + ChatColor.GRAY + " | List horses owned by player.");
         }
         if(sender.hasPermission("ccorral.gps")) {
-            sender.sendMessage(ChatColor.WHITE + "/horse-gps <horseID>" + ChatColor.GRAY + " | Get the location of a specified horse.");
+            sender.sendMessage(ChatColor.WHITE + "/horse-gps <horse ID/name>" + ChatColor.GRAY + " | Get the location of a specified horse.");
             sender.sendMessage(ChatColor.WHITE + "    aliases:" + ChatColor.GRAY + " /hgps");
         }
         if(sender.hasPermission("ccorral.gps-all")) {
-            sender.sendMessage(ChatColor.WHITE + "/horse-gps <player> <horseID>" + ChatColor.GRAY + " | Locate a player's horse.");
+            sender.sendMessage(ChatColor.WHITE + "/horse-gps <player> <horseID/name>" + ChatColor.GRAY + " | Locate a player's horse.");
         }
         if(sender.hasPermission("ccorral.tp")) {
-            sender.sendMessage(ChatColor.WHITE + "/horse-tp <player> <horseID>" + ChatColor.GRAY + " | Teleport a horse to you.");
+            sender.sendMessage(ChatColor.WHITE + "/horse-tp <player> <horseID/name>" + ChatColor.GRAY + " | Teleport a horse to you.");
             sender.sendMessage(ChatColor.WHITE + "    aliases:" + ChatColor.GRAY + " /htp");
         }
         if(sender.hasPermission("ccorral.info")) {
-            sender.sendMessage(ChatColor.WHITE + "/horse-info" + ChatColor.GRAY + " | Display owner and lock status of a horse.");
+            sender.sendMessage(ChatColor.WHITE + "/horse-info" + ChatColor.GRAY + " | Display horse info & stats.");
+            if(sender.hasPermission("ccorral.admin")) {
+                sender.sendMessage(ChatColor.WHITE + "/horse-info <player> <horseID/name>" + ChatColor.GRAY + " | Display horse UUID info.");
+            }
             sender.sendMessage(ChatColor.WHITE + "    aliases:" + ChatColor.GRAY + " /hinfo");
+        }
+        if(sender.hasPermission("ccorral.bypass")) {
+            sender.sendMessage(ChatColor.WHITE + "/horse-bypass" + ChatColor.GRAY + " | Toggle horse access bypass.");
+            sender.sendMessage(ChatColor.WHITE + "    aliases:" + ChatColor.GRAY + " /hbypass");
         }
     }
     
@@ -188,5 +231,49 @@ public class Utils {
         }
         
         return pagified;
+    }
+    
+    //Code implimented from https://github.com/RedPanda4552/HorseStats to acquire speed from NMS
+    public static double getSpeed(Horse horse) {
+        CraftHorse cHorse = (CraftHorse) horse;
+        NBTTagCompound compound = new NBTTagCompound();
+        cHorse.getHandle().b(compound);
+        double speed = -1;
+        NBTTagList list = (NBTTagList) compound.get("Attributes");
+        for(int i = 0; i < list.size() ; i++) {
+            NBTBase base = list.get(i);
+            if (base.getTypeId() == 10) {
+                NBTTagCompound attrCompound = (NBTTagCompound)base;
+                if (base.toString().contains("generic.movementSpeed")) {
+                    speed = attrCompound.getDouble("Base");
+                }
+            }   
+        }
+        return speed * 43;
+    }
+    
+    //Custom function to teleport Horses, this allows for cross-world teleportation. Passengers do not work with this, but /horse-tp already will not teleport horses with riders anyway.
+    public static void teleportHorse(Horse horse, Location toHere) {
+        EntityHorse ehorse = ((CraftHorse)horse).getHandle();
+        net.minecraft.server.v1_7_R4.World toWorld = ((CraftWorld)toHere.getWorld()).getHandle();
+        if(ehorse.world != toWorld) {
+            ehorse.world.removeEntity(ehorse);
+            ehorse.dead = false;
+            ehorse.world = toWorld;
+            ehorse.setLocation(toHere.getX(), toHere.getY(), toHere.getZ(), toHere.getYaw(), toHere.getPitch());
+            ehorse.world.addEntity(ehorse);
+        } else {
+            ehorse.getBukkitEntity().teleport(toHere);
+        }
+
+    }
+    
+    public static boolean nameChecker(String name, String check) {
+        String tempName = ((name.startsWith("\"") && name.endsWith("\"")) && !(check.startsWith("\"") && check.endsWith("\""))) ? name.substring(1, name.length() -1) : name;
+        if(tempName.equalsIgnoreCase(check)) {
+            return true;
+        } else {
+            return false;
+        }
     }
 }

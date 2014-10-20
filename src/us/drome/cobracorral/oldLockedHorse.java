@@ -1,106 +1,78 @@
 package us.drome.cobracorral;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import org.bukkit.Location;
-import org.bukkit.Material;
 import org.bukkit.World;
+import org.bukkit.configuration.serialization.ConfigurationSerializable;
 import org.bukkit.entity.Horse;
-import org.bukkit.entity.Horse.Style;
-import org.bukkit.entity.Horse.Variant;
 
-public class LockedHorse {
-    private UUID uuid;
+public class oldLockedHorse implements ConfigurationSerializable {
     private UUID owner;
     private String name;
-    private String nickname;
     private String appearance;
     private String armor;
-    private String saddle;
-    private String chest;
     private String location;
-    private int maxHealth = 0;
-    private double maxSpeed = 0;
-    private double jumpHeight = 0;
     private List<UUID> accessList;
+    public String ownerName; //Only here for UUID conversion, never saved to file and will be removed from future versions.
     
-    
-    public LockedHorse(Horse horse, UUID ownerID) {
-        Variant variant = horse.getVariant();
-        Style style = horse.getStyle();
-        
-        uuid = horse.getUniqueId();
+    public oldLockedHorse(Horse horse, UUID ownerID) {
         owner = ownerID;
         name = (horse.getCustomName() != null ? horse.getCustomName() : "NoName");
-        nickname = "";
-        appearance = ((variant == Variant.HORSE) ? horse.getColor().toString() + " " +
-                (style.toString().equalsIgnoreCase("none") ? "" : style.toString()) : variant.toString());
+        appearance = ((horse.getVariant() == Horse.Variant.HORSE) ? horse.getColor().toString() + " " +
+                (horse.getStyle().toString().equalsIgnoreCase("none") ? "" : horse.getStyle().toString()) : horse.getVariant().toString());
         armor = (horse.getInventory().getArmor() != null ? horse.getInventory().getArmor().getType().toString() : "No Armor");
-        saddle = (horse.getInventory().contains(Material.SADDLE)) ? "Saddled" : "No Saddle";
-        chest = horse.isCarryingChest() ? "Has Chest" : "";
         Location horseLoc = horse.getLocation();
         location = horseLoc.getBlockX() + ":" + horseLoc.getBlockY() + ":" + horseLoc.getBlockZ() + ":" + horseLoc.getWorld().getName();
-        maxHealth = (int)Math.floor(horse.getMaxHealth() / 2 );
-        jumpHeight = 5.5 * (Math.pow(horse.getJumpStrength(), 2)); //Formula from https://github.com/RedPanda4552/HorseStats
-        maxSpeed = Utils.getSpeed(horse);
         accessList = new ArrayList<>();
     }
     
-    public LockedHorse(UUID uuid, UUID owner, String name, String nickname, String appearance, String armor, String saddle, String chest, String location, int maxHealth, double maxSpeed, double jumpHeight, List<UUID> accessList) {
-        this.uuid = uuid;
-        this.owner = owner;
-        this.name = name;
-        this.nickname = nickname;
-        this.appearance = appearance;
-        this.armor = armor;
-        this.saddle = saddle;
-        this.chest = chest;
-        this.location = location;
-        this.maxHealth = maxHealth;
-        this.maxSpeed = maxSpeed;
-        this.jumpHeight = jumpHeight;
-        this.accessList = accessList;
+    //Constructor for de-serialization on loading from config.yml    
+    public oldLockedHorse(Map<String, Object> map) {
+        try {
+            owner = UUID.fromString((String)map.get("owner"));
+        } catch (IllegalArgumentException e) {
+            ownerName = (String)map.get("owner");
+        }
+        name = (String)map.get("name");
+        appearance = (String)map.get("appearance");
+        armor = (String)map.get("armor");
+        location = (String)map.get("location");
+        List<String> aclTemp = (List<String>)map.get("accessList");
+        accessList = new ArrayList<>();
+        if(aclTemp != null && !aclTemp.isEmpty()) {
+            for(String value : aclTemp) {
+                accessList.add(UUID.fromString(value));
+            }
+        }
     }
     
-    public LockedHorse updateHorse(Horse horse) {
+    public oldLockedHorse updateHorse(Horse horse) {
         name = (horse.getCustomName() != null ? horse.getCustomName() : "NoName");
         armor = (horse.getInventory().getArmor() != null ? horse.getInventory().getArmor().getType().toString() : "No Armor");
-        saddle = (horse.getInventory().contains(Material.SADDLE)) ? "Saddled" : "No Saddle";
-        chest = ((horse.getVariant().equals(Variant.DONKEY) ||  horse.getVariant().equals(Variant.MULE)) && horse.isCarryingChest() ? "Has Chest" : ""); 
         Location horseLoc = horse.getLocation();
         location = horseLoc.getBlockX() + ":" + horseLoc.getBlockY() + ":" + horseLoc.getBlockZ() + ":" + horseLoc.getWorld().getName();
-        if(maxHealth == 0) {
-            maxHealth = (int)Math.floor(horse.getMaxHealth() / 2 );
-            jumpHeight = 5.5 * (Math.pow(horse.getJumpStrength(), 2));
-            maxSpeed = Utils.getSpeed(horse);
-        }
         return this;
-    }
-    
-    public UUID getUUID() {
-        return uuid;
     }
     
     public UUID getOwner() {
         return owner;
     }
     
-    public LockedHorse setOwner(UUID owner) {
+    public oldLockedHorse setOwner(UUID owner) {
         this.owner = owner;
         return this;
     }
     
     public String getName() {
-        return (name.equalsIgnoreCase("NoName") ? nickname.equalsIgnoreCase("") ? "NoName" : "\"" + nickname + "\"" : name);
-    }
-    
-    public String getNickname() {
-        return nickname;
+        return name;
     }
     
     public void setNickname(String nickname) {
-        this.nickname = nickname;
+        this.name = "\'" + nickname + "\'";
     }
     
     public String getAppearance() {
@@ -109,14 +81,6 @@ public class LockedHorse {
     
     public String getArmor() {
         return armor;
-    }
-    
-    public String getSaddle() {
-        return saddle;
-    }
-    
-    public String getChest() {
-        return chest;
     }
     
     public Location getLocation(CobraCorral plugin) {
@@ -146,18 +110,6 @@ public class LockedHorse {
     
     public String getWorld() {
         return location.split(":")[3];
-    }
-    
-    public int getMaxHealth() {
-        return maxHealth;
-    }
-    
-    public double getMaxSpeed() {
-        return maxSpeed;
-    }
-    
-    public double getJumpHeight() {
-        return jumpHeight;
     }
     
     /*
@@ -191,5 +143,34 @@ public class LockedHorse {
     
     public List<UUID> getAccessList() {
         return accessList;
+    }
+    
+    /*
+    Methods below are used for ConfigurationSerializable support
+    */
+    @Override
+    public Map<String, Object> serialize() {
+        Map<String, Object> map = new HashMap<>();
+        map.put("owner", owner.toString());
+        map.put("name", name);
+        map.put("appearance", appearance);
+        map.put("armor", armor);
+        map.put("location", location);
+        List<String> aclTemp = new ArrayList<>();
+        if(accessList != null && !accessList.isEmpty()) {
+            for(UUID value : accessList) {
+                aclTemp.add(value.toString());
+            }
+        }
+        map.put("accessList", aclTemp);
+        return map;
+    }
+    
+    public oldLockedHorse valueOf(Map<String, Object> map) {
+        return new oldLockedHorse(map);
+    }
+    
+    public oldLockedHorse deserialize(Map<String, Object> map) {
+        return new oldLockedHorse(map);
     }
 }

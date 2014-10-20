@@ -4,3 +4,7 @@ auto-lock: true
 immortal-cooldown: false
 cooldown-time: 5
 protect-chests: true
+stop-pvp: false
+backend:
+  type: sqlite
+  file: ccorral.db

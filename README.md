@@ -10,3 +10,14 @@ Configuration:
 * **immortal-cooldown** - If true, horses will become invulnerable only after a delay. *Default: false*
 * **cooldown-time** - The time, in seconds, that a horse will be vulnerable after the rider gets off. *Default: 5*
 * **protect-chests** - If false, players cannot lock Mules/Donkeys with chests or place chests on locked Mules/Donkeys. *Default: true*
+* **stop-pvp** - If true, players can not damage a locked horse if someone is riding it. *Default: false*
+* **backend** - Sets the database used to store locked horse information. *Default: sqlite, see settings below.*
+** **type:** sqlite
+** **file:** ccorral.db
+**or**
+** **type:** mysql
+** **hostname:** localhost
+** **port:** 3306
+** **database:** ccorral
+** **username:** root
+** **password:** password
