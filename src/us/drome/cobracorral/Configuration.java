@@ -19,6 +19,7 @@ public class Configuration {
     public int COOLDOWN_TIME;
     public boolean PROTECT_CHESTS;
     public boolean STOP_PVP;
+    public boolean EJECT_ON_LOGOFF;
     public String BACKEND;
     
     public Configuration(CobraCorral plugin) {
@@ -64,6 +65,7 @@ public class Configuration {
         
         //oldHorses contain items, convert to LockedHorse and update.
         if(plugin.getConfig().contains("horses")) {
+            plugin.getLogger().info("Detected horses stored in config file, converting...");
             convertOldHorses();
         }
     }
@@ -78,6 +80,7 @@ public class Configuration {
         COOLDOWN_TIME = plugin.getConfig().getInt("cooldown-time", 0);
         PROTECT_CHESTS = plugin.getConfig().getBoolean("protect-chests", true);
         STOP_PVP = plugin.getConfig().getBoolean("stop-pvp", false);
+        EJECT_ON_LOGOFF = plugin.getConfig().getBoolean("eject-on-logoff", true);
     }
     
     public void convertOldHorses() {

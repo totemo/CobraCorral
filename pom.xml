@@ -52,6 +52,27 @@
              <target>1.7</target>
          </configuration>
         </plugin>
+         <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-shade-plugin</artifactId>
+        <version>2.1</version>
+        <executions>
+            <execution>
+                <phase>package</phase>
+                <goals>
+                    <goal>shade</goal>
+                </goals>
+            </execution>
+        </executions>
+        <configuration>
+            <minimizeJar>true</minimizeJar>
+            <artifactSet>
+                <includes>
+                    <include>com.mchange</include>
+                </includes>
+            </artifactSet>
+        </configuration>
+    </plugin>
      </plugins>
     </build>
     <repositories>
@@ -100,6 +121,12 @@
 			<artifactId>postgresql</artifactId>
 			<version>9.1-901-1.jdbc4</version>
 		</dependency>
+                
+                <dependency>
+                    <groupId>com.mchange</groupId>
+                    <artifactId>c3p0</artifactId>
+                    <version>0.9.5-pre9</version> 
+                </dependency> 
     </dependencies>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>

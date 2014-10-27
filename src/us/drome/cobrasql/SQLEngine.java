@@ -1,17 +1,14 @@
 package us.drome.cobrasql;
 
-import java.lang.reflect.InvocationTargetException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import com.mchange.v2.c3p0.ComboPooledDataSource;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Class allows for the standardized connection to a SQL database and the ability to send
@@ -22,7 +19,7 @@ import java.util.logging.Logger;
  */
 public abstract class SQLEngine {
     protected final Logger logger;
-    protected Connection connection;
+    protected ComboPooledDataSource pool;
     /**
      * ExecutorService is used to run queries asynchronously. It is instantiated
      * as a SingleThreadExecutor to queue all database operations so they are executed in order.
@@ -34,19 +31,6 @@ public abstract class SQLEngine {
         this.queryExecutor = Executors.newSingleThreadExecutor();
     }
 
-    public void runAsyncQuery (final PreparedStatement query, final Callback callback){
-        queryExecutor.execute(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    callback.invoke(runQuery(query));
-                } catch (IllegalArgumentException | IllegalAccessException | InvocationTargetException e) {
-                    logger.log(Level.SEVERE, e.getMessage());
-                }
-            }
-        });
-    }
-
     public void runAsyncUpdate (final PreparedStatement update) {
         queryExecutor.execute(new Runnable() {
            @Override
@@ -56,74 +40,50 @@ public abstract class SQLEngine {
         });
     }
     
-    public Map<String, Object> runQuery(PreparedStatement query) {
-        Connection conn = getConnection();
-        ResultSet result;
-        ResultSetMetaData resultMeta;
-        Map<String, Object> resultMap = new HashMap<>();
-        PreparedStatement statement;
-        
-        try {
-            conn.setAutoCommit(false);
-            result = query.executeQuery();
-            resultMeta = result.getMetaData();
-            while(result.next()) {
-                for(int i = 1 ; i <= resultMeta.getColumnCount() ; i++) {
-                    resultMap.put(resultMeta.getColumnName(i), result.getObject(i));
-                }
-            }
-        } catch (SQLException e) {
-            logger.log(Level.SEVERE, e.getMessage());
-            if(conn != null) {
-                try {
-                    logger.log(Level.SEVERE, e.getMessage() + " Attempting to roll back query.");
-                    conn.rollback();
-                } catch (SQLException ex) {
-                    logger.log(Level.SEVERE, e.getMessage());
-                }
-            }
-        } finally {
-            try { conn.setAutoCommit(true);} catch (SQLException e) { logger.log(Level.SEVERE, e.getMessage()); }
-        }
-        return resultMap;
+    public void runAsyncBatchUpdate (final PreparedStatement batchUpdate) {
+                queryExecutor.execute(new Runnable() {
+           @Override
+           public void run() {
+               runBatchUpdate(batchUpdate);
+           }
+        });
     }
     
     public void runUpdate(PreparedStatement update) {
-        Connection conn = getConnection();
         try {
-            conn.setAutoCommit(false);
+            update.getConnection().setAutoCommit(false);
             update.executeUpdate();
         } catch (SQLException e) {
             logger.log(Level.SEVERE, e.getMessage());
              try {
                 logger.log(Level.SEVERE, e.getMessage() + " Attempting to roll back update.");
-                conn.rollback();
+                update.getConnection().rollback();
             } catch (SQLException ex) {
                 logger.log(Level.SEVERE, e.getMessage());
             }
         } finally {
-            try { conn.setAutoCommit(true); } catch (SQLException e) { logger.log(Level.SEVERE, e.getMessage()); }
+            try { update.getConnection().setAutoCommit(true); update.getConnection().close(); update.close(); } catch (SQLException e) { logger.log(Level.SEVERE, e.getMessage()); }
         }
-        
+    }
+    
+    public void runBatchUpdate(PreparedStatement batchUpdate) {
+        try {
+            batchUpdate.getConnection().setAutoCommit(false);
+            batchUpdate.executeBatch();
+        } catch (SQLException e) {
+            logger.log(Level.SEVERE, e.getMessage());
+             try {
+                logger.log(Level.SEVERE, e.getMessage() + " Attempting to roll back update.");
+                batchUpdate.getConnection().rollback();
+            } catch (SQLException ex) {
+                logger.log(Level.SEVERE, e.getMessage());
+            }
+        } finally {
+            try { batchUpdate.getConnection().setAutoCommit(true); batchUpdate.getConnection().close(); batchUpdate.close(); } catch (SQLException e) { logger.log(Level.SEVERE, e.getMessage()); }
+        }
     }
  
     public abstract Connection getConnection();
-    
-    /**
-     * Closes any open connections to the database.
-     */
-    public void closeConnection() {
-        if(connection != null) {
-            try {
-                connection.close();
-                connection = null;
-            } catch (SQLException e) {
-                logger.log(Level.SEVERE, e.getMessage());
-            }
-        } else {
-            logger.log(Level.WARNING, "There are no connections to close.");
-        }
-    }
     
     /**
      * Properly shuts down this database connection including the query executor that could potentially hang the process it is running on.
@@ -131,9 +91,14 @@ public abstract class SQLEngine {
     public void shutdown() {
         if(queryExecutor != null) {
             queryExecutor.shutdown();
+            try {
+                queryExecutor.awaitTermination(3, TimeUnit.SECONDS);
+            } catch (InterruptedException ex) {
+                logger.log(Level.SEVERE, null, ex);
+            }
         }
-        if(connection != null) {
-            closeConnection();
+        if(pool != null) {
+            pool.close();
         }
         logger.log(Level.INFO, "Database engine has been successfully shut down.");
     }

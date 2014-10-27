@@ -1,9 +1,9 @@
 package us.drome.cobrasql;
 
+import com.mchange.v2.c3p0.ComboPooledDataSource;
 import java.io.File;
 import java.nio.file.Paths;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -41,7 +41,7 @@ public class SQLiteEngine extends SQLEngine {
     public File getFile() {
         File db = new File(file);
         if(!db.isAbsolute()) {
-            db = new File(Paths.get("plugins\\CobraCorral").toAbsolutePath().toString(), db.getPath());
+            db = new File(Paths.get("plugins" + File.separator + "CobraCorral").toAbsolutePath().toString(), db.getPath());
         }
         return db;
     }
@@ -52,18 +52,25 @@ public class SQLiteEngine extends SQLEngine {
     @Override
     public Connection getConnection() {
         try {
-            connection = openConnection(getFile());
+            if(pool != null) {
+                return pool.getConnection();
+            } else {
+                return openConnection(getFile());
+            }
         } catch (SQLException e) {
             logger.log(Level.SEVERE, e.getMessage());
         }
-        return connection;
+        return null;
     }
     
     private Connection openConnection(File db) throws SQLException {
         try {
-            Class.forName(org.sqlite.JDBC.class.getName());
-            return DriverManager.getConnection("jdbc:sqlite:" + db);
-        } catch (ClassNotFoundException ex) {
+            pool = new ComboPooledDataSource();
+            pool.setDriverClass("org.sqlite.JDBC");
+            pool.setJdbcUrl("jdbc:sqlite:" + db);
+            pool.setMaxPoolSize(50);
+            return pool.getConnection();
+        } catch (Exception ex) {
             throw new SQLException("Cannot load SQLite. Check your installation and try again.");
         }
     }

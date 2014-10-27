@@ -11,6 +11,7 @@ Configuration:
 * **cooldown-time** - The time, in seconds, that a horse will be vulnerable after the rider gets off. *Default: 5*
 * **protect-chests** - If false, players cannot lock Mules/Donkeys with chests or place chests on locked Mules/Donkeys. *Default: true*
 * **stop-pvp** - If true, players can not damage a locked horse if someone is riding it. *Default: false*
+* **eject-on-logoff** - If true, any non-owner player on a locked horse (test-driving or on ACL) will be ejected on logoff. *Default: true*
 * **backend** - Sets the database used to store locked horse information. *Default: sqlite, see settings below.*
   * **type:** sqlite
   * **file:** ccorral.db

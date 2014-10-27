@@ -1,5 +1,6 @@
 package us.drome.cobracorral;
 
+import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -40,11 +41,12 @@ public class Database {
     private Set<LockedHorse> horseCache;
     
     public Database(SQLEngine backend) throws Exception {
+        System.setProperty("com.mchange.v2.log.MLog", "com.mchange.v2.log.FallbackMLog");
+        System.setProperty("com.mchange.v2.log.FallbackMLog.DEFAULT_CUTOFF_LEVEL", "OFF");
+        System.setProperty("com.mchange.v2.c3p0.management.ManagementCoordinator","com.mchange.v2.c3p0.management.NullManagementCoordinator");
         this.database = backend;
         horseCache = new LinkedHashSet<>();
-        
-        try {
-            PreparedStatement initializeHorses = database.getConnection().prepareStatement("CREATE TABLE IF NOT EXISTS HORSES (" +
+        String initHorsesUpdate = "CREATE TABLE IF NOT EXISTS HORSES (" +
                     "UUID NVARCHAR(36) PRIMARY KEY NOT NULL," +
                     "Owner NVARCHAR(36)," +
                     "Name NVARCHAR(64)," +
@@ -56,12 +58,14 @@ public class Database {
                     "Location NVARCHAR(32)," +
                     "MaxHealth INTEGER(2)," +
                     "MaxSpeed FLOAT," +
-                    "JumpHeight FLOAT);");
-
-            PreparedStatement initializeACL = database.getConnection().prepareStatement("CREATE TABLE IF NOT EXISTS ACL (" +
+                    "JumpHeight FLOAT);";
+        String initACLUpdate = "CREATE TABLE IF NOT EXISTS ACL (" +
                     "Horse NVARCHAR(36) NOT NULL," +
-                    "Player NVARCHAR(36) NOT NULL);");
-                    
+                    "Player NVARCHAR(36) NOT NULL);";
+        
+        try {
+            PreparedStatement initializeHorses = database.getConnection().prepareStatement(initHorsesUpdate);
+            PreparedStatement initializeACL = database.getConnection().prepareStatement(initACLUpdate);
             database.runAsyncUpdate(initializeHorses);
             database.runAsyncUpdate(initializeACL);
             database.getLogger().info("Database successfully initialized.");
@@ -87,9 +91,10 @@ public class Database {
     
     
     public void updateHorse(LockedHorse lhorse) {
+        String updateString = "UPDATE HORSES SET UUID = ?, Owner = ?, Name = ?, Nickname = ?, Appearance = ?, Armor = ?, Saddle = ?,"
+                    + "Chest = ?, Location = ?, MaxHealth = ?, MaxSpeed = ?, JumpHeight = ? WHERE UUID = ?";
         try {
-            PreparedStatement update = database.getConnection().prepareStatement("UPDATE HORSES SET UUID = ?, Owner = ?, Name = ?, Nickname = ?, Appearance = ?, Armor = ?, Saddle = ?,"
-                    + "Chest = ?, Location = ?, MaxHealth = ?, MaxSpeed = ?, JumpHeight = ? WHERE UUID = ?");
+            PreparedStatement update = database.getConnection().prepareStatement(updateString);
             update.setString(1, lhorse.getUUID().toString());
             update.setString(2, lhorse.getOwner().toString());
             update.setString(3, lhorse.getName());
@@ -104,7 +109,7 @@ public class Database {
             update.setDouble(12, lhorse.getJumpHeight());
             update.setString(13, lhorse.getUUID().toString());
             database.runAsyncUpdate(update);
-        } catch (SQLException ex) {
+        } catch (Exception ex) {
             database.getLogger().log(Level.SEVERE, null, ex);
         }
     }
@@ -129,8 +134,11 @@ public class Database {
         
         //If no locked horses were found in the cache, check the database.
         if(horses.isEmpty()) {
-            try {
-                PreparedStatement query = database.getConnection().prepareStatement("SELECT * FROM HORSES LEFT JOIN ACL ON HORSES.UUID=ACL.Horse WHERE Owner = ?");
+            String queryString = "SELECT * FROM HORSES LEFT JOIN ACL ON HORSES.UUID=ACL.Horse WHERE Owner = ?";
+            try (
+                Connection con = database.getConnection();
+                PreparedStatement query = con.prepareStatement(queryString);
+            ){
                 query.setString(1, playerID.toString());
                 ResultSet result = query.executeQuery();
                 
@@ -178,7 +186,7 @@ public class Database {
                         }
                     }
                 }
-            } catch (SQLException ex) {
+            } catch (Exception ex) {
                 database.getLogger().log(Level.SEVERE, null, ex);
             }
         }
@@ -195,8 +203,11 @@ public class Database {
             }
         }
         
-        try {
-            PreparedStatement query = database.getConnection().prepareStatement("SELECT * FROM HORSES LEFT JOIN ACL ON HORSES.UUID=ACL.Horse WHERE UUID = ?");
+        String queryString = "SELECT * FROM HORSES LEFT JOIN ACL ON HORSES.UUID=ACL.Horse WHERE UUID = ?";
+        try (
+            Connection con = database.getConnection();
+            PreparedStatement query = con.prepareStatement(queryString);
+        ){
             query.setString(1, horseID.toString());
             ResultSet result = query.executeQuery();
             
@@ -226,7 +237,7 @@ public class Database {
                 horseCache.add(lhorse);
                 return lhorse;
             }
-        } catch (SQLException ex) {
+        } catch (Exception ex) {
             database.getLogger().log(Level.SEVERE, null, ex);
         }
         return lhorse;
@@ -240,17 +251,19 @@ public class Database {
             }
         }
         
-        try {
-            PreparedStatement query = database.getConnection().prepareStatement("SELECT 1 FROM HORSES WHERE UUID = ?");
+        String queryString = "SELECT 1 FROM HORSES WHERE UUID = ?";
+        try (
+            Connection con = database.getConnection();
+            PreparedStatement query = con.prepareStatement(queryString);
+        ){
             query.setString(1, horseID.toString());
             ResultSet result = query.executeQuery();
-            database.closeConnection();
             if(result.isBeforeFirst()) {
                 return true; 
             } else {
                 return false;
             }
-        } catch (SQLException ex) {
+        } catch (Exception ex) {
             database.getLogger().log(Level.SEVERE, null, ex);
         }
         return false;
@@ -259,8 +272,10 @@ public class Database {
     public void addHorse(Horse horse, UUID owner) {
         LockedHorse lhorse = new LockedHorse(horse, owner);
         horseCache.add(lhorse);
+        
+        String updateString = "INSERT INTO HORSES VALUES (?,?,?,?,?,?,?,?,?,?,?,?)";
         try {
-            PreparedStatement update = database.getConnection().prepareStatement("INSERT INTO HORSES VALUES (?,?,?,?,?,?,?,?,?,?,?,?)");
+            PreparedStatement update = database.getConnection().prepareStatement(updateString);
             update.setString(1, lhorse.getUUID().toString());
             update.setString(2, lhorse.getOwner().toString());
             update.setString(3, lhorse.getName());
@@ -274,15 +289,17 @@ public class Database {
             update.setDouble(11, lhorse.getMaxSpeed());
             update.setDouble(12, lhorse.getJumpHeight());
             database.runAsyncUpdate(update);
-        } catch (SQLException ex) {
+        } catch (Exception ex) {
             database.getLogger().log(Level.SEVERE, null, ex);
         }
     }
     
     public boolean batchAddLockedHorses(ArrayList<LockedHorse> lhorses) {
+        String horsesString = "INSERT OR IGNORE INTO HORSES VALUES (?,?,?,?,?,?,?,?,?,?,?,?)";
+        String aclString = "INSERT OR IGNORE INTO ACL VALUES (?,?)";
         try {
-            PreparedStatement batchHorses = database.getConnection().prepareStatement("INSERT INTO HORSES VALUES (?,?,?,?,?,?,?,?,?,?,?,?)");
-            PreparedStatement batchACL = database.getConnection().prepareStatement("INSERT INTO ACL VALUES (?,?)");
+            PreparedStatement batchHorses = database.getConnection().prepareStatement(horsesString);
+            PreparedStatement batchACL = database.getConnection().prepareStatement(aclString);
             for(LockedHorse lhorse : lhorses) {
                 horseCache.add(lhorse);
                 batchHorses.setString(1, lhorse.getUUID().toString());
@@ -304,10 +321,10 @@ public class Database {
                     batchACL.addBatch();
                 }
             }
-            batchHorses.executeBatch();
-            batchACL.executeBatch();
+            database.runAsyncBatchUpdate(batchHorses);
+            database.runAsyncBatchUpdate(batchACL);
             return true;
-        } catch (SQLException ex) {
+        } catch (Exception ex) {
             database.getLogger().log(Level.SEVERE, null, ex);
         }
         return false;
@@ -316,29 +333,33 @@ public class Database {
     public void removeHorse(UUID horseID) {
         LockedHorse lhorse = getHorse(horseID);
         horseCache.remove(lhorse);
+        
+        String updateString = "DELETE FROM HORSES WHERE UUID = ?";
         try {
-            PreparedStatement update = database.getConnection().prepareStatement("DELETE FROM HORSES WHERE UUID = ?");
+            PreparedStatement update = database.getConnection().prepareStatement(updateString);
             update.setString(1, horseID.toString());
             database.runAsyncUpdate(update);
-        } catch (SQLException ex) {
+        } catch (Exception ex) {
             database.getLogger().log(Level.SEVERE, null, ex);
         }
     }
     
     public void addAccess(UUID horseID, UUID playerID) {
+        String updateString = "INSERT INTO ACL VALUES (?, ?)";
         try {
-            PreparedStatement update = database.getConnection().prepareStatement("INSERT INTO ACL VALUES (?, ?)");
+            PreparedStatement update = database.getConnection().prepareStatement(updateString);
             update.setString(1, horseID.toString());
             update.setString(2, playerID.toString());
             database.runAsyncUpdate(update);
-        } catch (SQLException ex) {
+        } catch (Exception ex) {
             database.getLogger().log(Level.SEVERE, null, ex);
         }
     }
     
     public void removeAccess(UUID horseID, UUID playerID) {
+        String updateString = "DELETE FROM ACL WHERE Horse = ? AND Player = ?";
         try {
-            PreparedStatement update = database.getConnection().prepareStatement("DELETE FROM ACL WHERE UUID = ? AND Player = ?");
+            PreparedStatement update = database.getConnection().prepareStatement(updateString);
             update.setString(1, horseID.toString());
             update.setString(2, playerID.toString());
             database.runAsyncUpdate(update);
@@ -348,11 +369,14 @@ public class Database {
     }
     
     public int size() {
-        try {
-            PreparedStatement query = database.getConnection().prepareStatement("SELECT COUNT(*) FROM HORSES");
+        String queryString = "SELECT COUNT(*) FROM HORSES";
+        try (
+            Connection con = database.getConnection();
+            PreparedStatement query = con.prepareStatement(queryString);
+        ){
             ResultSet result = query.executeQuery();
             return result.getInt(1);
-        } catch (SQLException ex) {
+        } catch (Exception ex) {
             database.getLogger().log(Level.SEVERE, null, ex);
         }
         return 0;

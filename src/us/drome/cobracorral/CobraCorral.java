@@ -33,22 +33,21 @@ public class CobraCorral extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        for(Player player : getServer().getOnlinePlayers()) {
+            if(player.isInsideVehicle() && player.getVehicle() instanceof Horse) {
+                Horse horse = (Horse)player.getVehicle();
+                if(utils.isHorseLocked(horse) && config.EJECT_ON_LOGOFF) {
+                    if(!player.getUniqueId().equals(horse.getOwner().getUniqueId())) {
+                        horse.eject();
+                    }
+                }
+            }
+        }
         getLogger().info("version " + getDescription().getVersion() + " has begun unloading...");
         config.save();
         getLogger().info("has saved " + config.Database.size() + " locked horses.");
         config.Database.getEngine().shutdown();
         getLogger().info("Database unloaded successfully.");
-        for (Player player : getServer().getOnlinePlayers()) {
-            if (player.isInsideVehicle()) {
-                if (player.getVehicle() instanceof Horse) {
-                    if (utils.isHorseLocked((Horse) player.getVehicle())) {
-                        if (!((Horse) player.getVehicle()).getOwner().getUniqueId().equals(player.getUniqueId())) {
-                            player.eject();
-                        }
-                    }
-                }
-            }
-        }
         getLogger().info("version " + getDescription().getVersion() + " has finished unloading.");
     }
 

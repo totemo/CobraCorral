@@ -176,17 +176,15 @@ public class LockedHorse {
         if(accessList.contains(player)) {
             accessList.remove(player);
             return true;
-        } else {
-            return false;
         }
+        return false;
     }
     
     public boolean hasAccess(UUID player) {
         if(accessList.contains(player)) {
             return true;
-        } else {
-            return false;
         }
+        return false;
     }
     
     public List<UUID> getAccessList() {

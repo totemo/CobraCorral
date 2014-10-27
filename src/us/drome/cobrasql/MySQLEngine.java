@@ -1,7 +1,8 @@
 package us.drome.cobrasql;
 
+import com.mchange.v2.c3p0.ComboPooledDataSource;
+import java.beans.PropertyVetoException;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -39,19 +40,27 @@ public class MySQLEngine extends SQLEngine {
     @Override
     public Connection getConnection() {
         try {
-                connection = openConnection();
+            if(pool != null) {
+                return pool.getConnection();
+            } else {
+                return openConnection();
+            }
         } catch (SQLException e) {
             logger.log(Level.SEVERE, e.getMessage());
-        }
-        
-        return connection;
+        } 
+        return null;
     }
     
     private Connection openConnection() throws SQLException {
         try {
-            Class.forName(com.mysql.jdbc.Driver.class.getName());
-            return DriverManager.getConnection("jdbc:mysql://" + url, username, password);
-        } catch (ClassNotFoundException ex) {
+            pool = new ComboPooledDataSource();
+            pool.setDriverClass("com.mysql.jdbc.Driver");
+            pool.setJdbcUrl("jdbc:mysql://" + url);
+            pool.setUser(username);
+            pool.setPassword(password);
+            pool.setMaxPoolSize(50);
+            return pool.getConnection();
+        } catch (PropertyVetoException ex) {
             throw new SQLException("Cannot load MySQL. Check your installation and try again.");
         }
     }

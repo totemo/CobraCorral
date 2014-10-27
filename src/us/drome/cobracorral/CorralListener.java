@@ -3,12 +3,12 @@ package us.drome.cobracorral;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.World.Environment;
+import org.bukkit.entity.AnimalTamer;
 import org.bukkit.entity.Arrow;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Horse;
@@ -21,9 +21,12 @@ import org.bukkit.event.entity.EntityDamageEvent.DamageCause;
 import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.entity.EntityPortalEvent;
 import org.bukkit.event.entity.EntityTameEvent;
+import org.bukkit.event.inventory.InventoryAction;
+import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
-import org.bukkit.event.inventory.InventoryMoveItemEvent;
+import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.event.inventory.InventoryOpenEvent;
+import org.bukkit.event.inventory.InventoryType.SlotType;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
@@ -158,13 +161,15 @@ public class CorralListener implements Listener {
         player.sendMessage(ChatColor.GRAY + "Status: " + ChatColor.GOLD + (lhorse != null ? (horse.hasMetadata(CobraCorral.HORSE_TEST_DRIVE) ? "Test Drive" : "Locked") : "Unlocked"));
         if(lhorse != null && !player.getUniqueId().equals(lhorse.getOwner())) {
             player.sendMessage(ChatColor.GRAY + "Can I Ride: " + ChatColor.GOLD + (lhorse.hasAccess(player.getUniqueId()) ? "Yes" : (horse.hasMetadata(CobraCorral.HORSE_TEST_DRIVE) ? "Yes" : "No" )));
+        } else {
+            player.sendMessage(ChatColor.GRAY + "Can I Ride: " + ChatColor.GOLD + "Yes");
         }
         player.sendMessage(ChatColor.GRAY + "Variety: " + ChatColor.GOLD + ((horse.getVariant() == Horse.Variant.HORSE) ? horse.getColor().toString() + " " +
                 (horse.getStyle().toString().equalsIgnoreCase("none") ? "" : horse.getStyle().toString()) : horse.getVariant().toString()));
         player.sendMessage(ChatColor.GRAY + "Equipment: " + ChatColor.GOLD + (horse.getInventory().getArmor() != null ? horse.getInventory().getArmor().getType().toString() : "No Armor") +
                 ((horse.getInventory().contains(Material.SADDLE)) ? ", Saddle" : ", No Saddle") +
                 (horse.isCarryingChest() ? ", Chest" : ""));
-        player.sendMessage(ChatColor.GRAY + "Health: " + ChatColor.GOLD + (Math.round((horse.getHealth())) / 2.0f) + "♥ / " + Math.floor(horse.getMaxHealth() / 2) + "♥");
+        player.sendMessage(ChatColor.GRAY + "Health: " + ChatColor.GOLD + (horse.getHealth() / 2) + "♥/" + (horse.getMaxHealth() / 2) + "♥");
         player.sendMessage(ChatColor.GRAY + "Speed: " + ChatColor.GOLD + (Math.round(Utils.getSpeed(horse) * 100.0f) / 100.0f) + "m/s");
         player.sendMessage(ChatColor.GRAY + "Jump Height: " + ChatColor.GOLD + (Math.round((5.5 * (Math.pow(horse.getJumpStrength(), 2))) * 100.0f) / 100.0f) + "m");
     }
@@ -294,7 +299,7 @@ public class CorralListener implements Listener {
             }
             horse.setOwner(null);
             horse.setTamed(false);
-            horse.setDomestication(horse.getMaxDomestication() / 2);
+            horse.setDomestication(1);
             horse.setCustomName(null);
             player.sendMessage(ChatColor.GRAY + horse.getVariant().toString() + " has been set free.");
             player.playSound(player.getLocation(), Sound.CLICK, 1f, 1f);
@@ -321,7 +326,8 @@ public class CorralListener implements Listener {
                         if(plugin.getServer().getOfflinePlayer(playerID).hasPlayedBefore()) {
                             response.add(ChatColor.GRAY + plugin.getServer().getOfflinePlayer(playerID).getName());
                         } else {
-                            response.add(playerID.toString());
+                            String name = (plugin.getServer().getPlayer(playerID) == null) ? playerID.toString() : plugin.getServer().getPlayer(playerID).getName();
+                            response.add(ChatColor.GOLD + name);
                         }
                     }
                     for(String line : response) {
@@ -445,14 +451,14 @@ public class CorralListener implements Listener {
     public void onEntityDeath(EntityDeathEvent event) {
         if(event.getEntity() instanceof Horse) {
             Horse horse = (Horse)event.getEntity();
-            Player owner = (Player)horse.getOwner();
+            AnimalTamer owner = horse.getOwner();
             String passenger = (horse.getPassenger() == null ? "" : horse.getPassenger() instanceof Player ? ((Player)horse.getPassenger()).getName() : horse.getPassenger().toString());
             String causedBy = (horse.getKiller() == null ? "the environment" : horse.getKiller().getName());
             if(utils.isHorseLocked(horse)) {
                 utils.unlockHorse(horse.getUniqueId());
                 
-                if(!owner.equals(horse.getPassenger()) && owner.isOnline()) {
-                    owner.sendMessage(ChatColor.GRAY + (horse.getCustomName() != null ? horse.getCustomName() : horse.getVariant().toString()) +
+                if(owner instanceof Player && !owner.equals(horse.getPassenger()) && ((Player)owner).isOnline()) {
+                    ((Player)owner).sendMessage(ChatColor.GRAY + (horse.getCustomName() != null ? horse.getCustomName() : horse.getVariant().toString()) +
                         " has died due to " + causedBy + (passenger.isEmpty() ? "." : " while being ridden by " + passenger + "."));
                 }
                 
@@ -470,16 +476,18 @@ public class CorralListener implements Listener {
         if(event.getVehicle() instanceof Horse) {
             Horse horse = (Horse)event.getVehicle();
             final UUID horseID = horse.getUniqueId();
-            if(utils.isHorseLocked(horse) && plugin.config.IMMORTAL_COOLDOWN) {
+            if(utils.isHorseLocked(horse)) {
                 LockedHorse lhorse = config.Database.getHorse(horseID);
                 utils.updateHorse(lhorse, horse);
-                onCooldown.add(horseID);
-                new BukkitRunnable() {
-                    @Override
-                    public void run() {
-                        onCooldown.remove(horseID);
-                    }
-                }.runTaskLaterAsynchronously(plugin, (plugin.config.COOLDOWN_TIME * 20));
+                if(plugin.config.IMMORTAL_COOLDOWN) {
+                    onCooldown.add(horseID);
+                    new BukkitRunnable() {
+                        @Override
+                        public void run() {
+                            onCooldown.remove(horseID);
+                        }
+                    }.runTaskLaterAsynchronously(plugin, (plugin.config.COOLDOWN_TIME * 20));
+                }
             }
         }
     }
@@ -509,14 +517,32 @@ public class CorralListener implements Listener {
     }
     
     @EventHandler
-    public void onInventoryMoveItem(InventoryMoveItemEvent event) {
-        if(event.getSource() instanceof HorseInventory && event.getSource().getHolder() instanceof Horse) {
-            Horse horse = (Horse)event.getSource().getHolder();
+    public void onInventoryClick(InventoryClickEvent event) {
+        if(event.getInventory().getHolder() instanceof Horse) {
+            Horse horse = (Horse)event.getInventory().getHolder();
             if(utils.isHorseLocked(horse)) {
                 LockedHorse lhorse = config.Database.getHorse(horse.getUniqueId());
-                if(event.getInitiator().getHolder() instanceof Player && !((Player)event.getInitiator().getHolder()).getUniqueId().equals(lhorse.getOwner())) {
-                    plugin.getLogger().info("[ItemMove]" + ((Player)event.getInitiator().getHolder()).getName() + " removed item " + event.getItem().toString() + " from horse " +
+                if(!lhorse.getOwner().equals(event.getWhoClicked().getUniqueId()) && (event.getSlotType() != SlotType.OUTSIDE)) {
+                    if(event.getRawSlot() == event.getSlot() && !(event.getCurrentItem().getType().equals(Material.AIR) && event.getCursor().getType().equals(Material.AIR))) {
+                        String item = (event.getCurrentItem().getType().equals(Material.AIR)) ? event.getCursor().getType().name() : event.getCurrentItem().getType().name();
+                        InventoryAction action = event.getAction();
+                        String toFrom = (action.equals(InventoryAction.PLACE_ALL) || action.equals(InventoryAction.PLACE_ONE) || action.equals(InventoryAction.PLACE_SOME)) ? " to" : " from";
+                        plugin.getLogger().info("[ItemMove]" + ((Player)event.getWhoClicked()).getName() + " moved item " + item + toFrom + " horse " +
                             lhorse.getUUID() + "/" + lhorse.getName() + " owned by " + utils.getOwnerName(lhorse.getOwner()) );
+                    }
+                }
+            }
+        }
+    }
+    
+    @EventHandler
+    public void onInventoryDrag(InventoryDragEvent event) {
+        if(event.getInventory().getHolder() instanceof Horse) {
+            Horse horse = (Horse) event.getInventory().getHolder();
+            if(utils.isHorseLocked(horse)) {
+                LockedHorse lhorse = config.Database.getHorse(horse.getUniqueId());
+                if(!lhorse.getOwner().equals(event.getWhoClicked().getUniqueId())) {
+                    event.setCancelled(true);
                 }
             }
         }
@@ -526,13 +552,11 @@ public class CorralListener implements Listener {
     public void onPlayerQuit(PlayerQuitEvent event) {
         Player player = event.getPlayer();
         config.Database.clearCache(player.getUniqueId());
-        if(player.getVehicle() != null) {
+        if(player.getVehicle() != null && config.EJECT_ON_LOGOFF) {
             if(player.getVehicle() instanceof Horse) {
                 Horse horse = (Horse)player.getVehicle();
                 if(utils.isHorseLocked(horse)) {
-                    if(!horse.getOwner().getUniqueId().equals(player.getUniqueId())) {
-                        horse.eject();
-                    }
+                    horse.eject();
                 }
             }
         }
@@ -541,10 +565,7 @@ public class CorralListener implements Listener {
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
         //When a player joins the server, load their horses into the cache.
-        Set<LockedHorse> lhorses = config.Database.getHorses(event.getPlayer().getUniqueId());
-        for(LockedHorse lhorse : lhorses) {
-            plugin.getLogger().info("Cached horse: " + lhorse.getUUID() + ":" + lhorse.getName());
-        }
+        config.Database.getHorses(event.getPlayer().getUniqueId());
     }
     
     @EventHandler
