@@ -119,9 +119,6 @@ public class CorralListener implements Listener {
                     }
                     LockedHorse lhorse = config.Database.getHorse(horse.getUniqueId());
                     if(!(player.equals(horse.getOwner()) || player.hasMetadata(CobraCorral.HORSE_BYPASS))) {
-                        if(player.hasMetadata(CobraCorral.HORSE_BYPASS)) {
-                            plugin.getLogger().info("[Bypass] " + player.getName() + " used access bypass on horse " + lhorse.getUUID() + "/" + lhorse.getName() + " owned by " + utils.getOwnerName(lhorse.getOwner()));
-                        }
                         if(horse.hasMetadata(CobraCorral.HORSE_TEST_DRIVE) || lhorse.hasAccess(player.getUniqueId())){
                             player.sendMessage(ChatColor.GRAY + "You are now riding " + lhorse.getName() + " owned by " + ChatColor.GOLD + utils.getOwnerName(lhorse.getOwner()));
                         } else {
@@ -132,7 +129,10 @@ public class CorralListener implements Listener {
                             }
                             event.setCancelled(true);
                         }
-                    } 
+                    }
+                    if(player.hasMetadata(CobraCorral.HORSE_BYPASS)) {
+                        plugin.getLogger().info("[Bypass] " + player.getName() + " used access bypass on horse " + lhorse.getUUID() + "/" + lhorse.getName() + " owned by " + utils.getOwnerName(lhorse.getOwner()));
+                    }
                 }
             }
         } else {
