@@ -5,17 +5,17 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
-import net.minecraft.server.v1_7_R4.EntityHorse;
-import net.minecraft.server.v1_7_R4.NBTBase;
-import net.minecraft.server.v1_7_R4.NBTTagCompound;
-import net.minecraft.server.v1_7_R4.NBTTagList;
+import net.minecraft.server.v1_8_R1.EntityHorse;
+import net.minecraft.server.v1_8_R1.NBTBase;
+import net.minecraft.server.v1_8_R1.NBTTagCompound;
+import net.minecraft.server.v1_8_R1.NBTTagList;
 import org.bukkit.ChatColor;
 import org.bukkit.Chunk;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.command.CommandSender;
-import org.bukkit.craftbukkit.v1_7_R4.CraftWorld;
-import org.bukkit.craftbukkit.v1_7_R4.entity.CraftHorse;
+import org.bukkit.craftbukkit.v1_8_R1.CraftWorld;
+import org.bukkit.craftbukkit.v1_8_R1.entity.CraftHorse;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Horse;
 import org.bukkit.entity.Player;
@@ -255,7 +255,7 @@ public class Utils {
     //Custom function to teleport Horses, this allows for cross-world teleportation. Passengers do not work with this, but /horse-tp already will not teleport horses with riders anyway.
     public static void teleportHorse(Horse horse, Location toHere) {
         EntityHorse ehorse = ((CraftHorse)horse).getHandle();
-        net.minecraft.server.v1_7_R4.World toWorld = ((CraftWorld)toHere.getWorld()).getHandle();
+        net.minecraft.server.v1_8_R1.World toWorld = ((CraftWorld)toHere.getWorld()).getHandle();
         if(ehorse.world != toWorld) {
             ehorse.world.removeEntity(ehorse);
             ehorse.dead = false;
