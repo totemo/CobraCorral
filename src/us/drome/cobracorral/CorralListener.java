@@ -1,5 +1,6 @@
 package us.drome.cobracorral;
 
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -169,9 +170,10 @@ public class CorralListener implements Listener {
         player.sendMessage(ChatColor.GRAY + "Equipment: " + ChatColor.GOLD + (horse.getInventory().getArmor() != null ? horse.getInventory().getArmor().getType().toString() : "No Armor") +
                 ((horse.getInventory().contains(Material.SADDLE)) ? ", Saddle" : ", No Saddle") +
                 (horse.isCarryingChest() ? ", Chest" : ""));
-        player.sendMessage(ChatColor.GRAY + "Health: " + ChatColor.GOLD + (horse.getHealth() / 2) + "♥/" + (horse.getMaxHealth() / 2) + "♥");
-        player.sendMessage(ChatColor.GRAY + "Speed: " + ChatColor.GOLD + (Math.round(Utils.getSpeed(horse) * 100.0f) / 100.0f) + "m/s");
-        player.sendMessage(ChatColor.GRAY + "Jump Height: " + ChatColor.GOLD + (Math.round((5.5 * (Math.pow(horse.getJumpStrength(), 2))) * 100.0f) / 100.0f) + "m");
+        DecimalFormat df = new DecimalFormat("###.##");
+        player.sendMessage(ChatColor.GRAY + "Health: " + ChatColor.GOLD + df.format(horse.getHealth() / 2) + "♥/" + df.format(horse.getMaxHealth() / 2) + "♥");
+        player.sendMessage(ChatColor.GRAY + "Speed: " + ChatColor.GOLD + df.format(Utils.getSpeed(horse)) + "m/s");
+        player.sendMessage(ChatColor.GRAY + "Jump Height: " + ChatColor.GOLD + df.format(Utils.getJumpHeight(horse)) + "m");
     }
     
     /*
