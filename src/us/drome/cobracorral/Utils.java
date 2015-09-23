@@ -1,21 +1,23 @@
 package us.drome.cobracorral;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import net.minecraft.server.v1_8_R1.EntityHorse;
-import net.minecraft.server.v1_8_R1.NBTBase;
-import net.minecraft.server.v1_8_R1.NBTTagCompound;
-import net.minecraft.server.v1_8_R1.NBTTagList;
+import net.minecraft.server.v1_8_R3.EntityHorse;
+import net.minecraft.server.v1_8_R3.NBTBase;
+import net.minecraft.server.v1_8_R3.NBTTagCompound;
+import net.minecraft.server.v1_8_R3.NBTTagList;
 import org.bukkit.ChatColor;
 import org.bukkit.Chunk;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.command.CommandSender;
-import org.bukkit.craftbukkit.v1_8_R1.CraftWorld;
-import org.bukkit.craftbukkit.v1_8_R1.entity.CraftHorse;
+import org.bukkit.craftbukkit.v1_8_R3.CraftWorld;
+import org.bukkit.craftbukkit.v1_8_R3.entity.CraftHorse;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Horse;
 import org.bukkit.entity.Player;
@@ -161,56 +163,158 @@ public class Utils {
         }
     }
     
-    
-    //Parsed command help to return to the player/console based on permissions.
-    public void helpDisplay(CommandSender sender) {
-        sender.sendMessage(ChatColor.GRAY + "=======" + ChatColor.WHITE + "CobraCorral v" + plugin.getDescription().getVersion() +
-            " Commands" + ChatColor.GRAY + "=======");
-        if(sender.hasPermission("ccorral.lock")) {
-            sender.sendMessage(ChatColor.WHITE + "/corral" + ChatColor.GRAY + " | Used to lock a horse you have tamed.");
-            sender.sendMessage(ChatColor.WHITE + "    aliases:" + ChatColor.GRAY + " /horse-lock, /hlock");
-            sender.sendMessage(ChatColor.WHITE + "/uncorral" + ChatColor.GRAY + " | Used to unlock a horse you have tamed.");
-            if(sender.hasPermission("ccorral.admin")) {
-               sender.sendMessage(ChatColor.WHITE + "/uncorral <player> <horseID/name>" + ChatColor.GRAY + " | Remotely unlock a specific horse."); 
+    //Method to return command information to the player, based on their access to the commands via permissions.
+    public void helpDisplay(CommandSender sender, String command) {
+        //Attempt to parse a # or command name out of the provided command argument.
+        int topic = 0;
+        try {
+            topic = Integer.parseInt(command);
+        } catch (NumberFormatException e) {
+            if(!command.startsWith("/") && !command.isEmpty()) {
+                command = "/" + command;
             }
-            sender.sendMessage(ChatColor.WHITE + "    aliases:" + ChatColor.GRAY + " /horse-unlock, /hunlock");
-            sender.sendMessage(ChatColor.WHITE + "/testdrive" + ChatColor.GRAY + " | Temporarily allow others to ride a locked horse.");
-            sender.sendMessage(ChatColor.WHITE + "    aliases:" + ChatColor.GRAY + " /horse-test, /htest");
-            sender.sendMessage(ChatColor.WHITE + "/horse-access: <+/-><player>" + ChatColor.GRAY + " | List, add(+), or remove(-) horse access.");
-            sender.sendMessage(ChatColor.WHITE + "    aliases:" + ChatColor.GRAY + " /haccess, /hacl");
+        }
+        
+        //A command list is built each time the help display is called, based on current player permissions and stored in this Map.
+        Map<Integer,String> commands = new HashMap();
+        int order = 1;
+        if(sender.hasPermission("ccorral.lock")) {
+            commands.put(order,"/corral"); order++;
+            commands.put(order,"/uncorral"); order++;
+            commands.put(order,"/horse-name"); order++;
+            commands.put(order,"/testdrive"); order++;
+            commands.put(order,"/horse-access"); order++;
         }
         if(sender.hasPermission("ccorral.free")) {
-            sender.sendMessage(ChatColor.WHITE + "/horse-free" + ChatColor.GRAY + " | Set free any unlocked horse you own.");
-            sender.sendMessage(ChatColor.WHITE + "    aliases:" + ChatColor.GRAY + " /hfree");
+            commands.put(order,"/horse-free"); order++;
         }
-        if(sender.hasPermission("ccorral.list")) {
-            sender.sendMessage(ChatColor.WHITE + "/horse-list <page>" + ChatColor.GRAY + " | List all horses you have locked.");
-            sender.sendMessage(ChatColor.WHITE + "    aliases:" + ChatColor.GRAY + " /hlist");
+        if(sender.hasPermission("ccorall.list")) {
+            commands.put(order,"/horse-list"); order++;
         }
-        if(sender.hasPermission("ccorral.list-all")) {
-            sender.sendMessage(ChatColor.WHITE + "/horse-list <player>" + ChatColor.GRAY + " | List horses owned by player.");
+        if(sender.hasPermission("ccorall.gps")) {
+            commands.put(order,"/horse-gps"); order++;
         }
-        if(sender.hasPermission("ccorral.gps")) {
-            sender.sendMessage(ChatColor.WHITE + "/horse-gps <horse ID/name>" + ChatColor.GRAY + " | Get the location of a specified horse.");
-            sender.sendMessage(ChatColor.WHITE + "    aliases:" + ChatColor.GRAY + " /hgps");
+        if(sender.hasPermission("ccorall.tp")) {
+            commands.put(order,"/horse-tp"); order++;
         }
-        if(sender.hasPermission("ccorral.gps-all")) {
-            sender.sendMessage(ChatColor.WHITE + "/horse-gps <player> <horseID/name>" + ChatColor.GRAY + " | Locate a player's horse.");
+        if(sender.hasPermission("ccorall.info")) {
+            commands.put(order,"/horse-info"); order++;
         }
-        if(sender.hasPermission("ccorral.tp")) {
-            sender.sendMessage(ChatColor.WHITE + "/horse-tp <player> <horseID/name>" + ChatColor.GRAY + " | Teleport a horse to you.");
-            sender.sendMessage(ChatColor.WHITE + "    aliases:" + ChatColor.GRAY + " /htp");
+        if(sender.hasPermission("ccorall.bypass")) {
+            commands.put(order,"/horse-bypass"); order++;
         }
-        if(sender.hasPermission("ccorral.info")) {
-            sender.sendMessage(ChatColor.WHITE + "/horse-info" + ChatColor.GRAY + " | Display horse info & stats.");
-            if(sender.hasPermission("ccorral.admin")) {
-                sender.sendMessage(ChatColor.WHITE + "/horse-info <player> <horseID/name>" + ChatColor.GRAY + " | Display horse UUID info.");
+        
+        //If the topic is 0 and command argument is empty, display the command list in 2 columns of 8 lines.
+        if(topic == 0 && command.isEmpty()) {
+            sender.sendMessage(ChatColor.GRAY + "=======" + ChatColor.GOLD + "CobraCorral v" + plugin.getDescription().getVersion() +
+                " Commands" + ChatColor.GRAY + "=======");
+            ArrayList<String> output = new ArrayList();
+            for(Integer index:commands.keySet()) {
+                if(index > 8) {
+                    String current = output.get(index - 9);
+                    while(current.length() < 25) {
+                        current = current.concat(" ");
+                    }
+                    output.set((index - 9),current + ChatColor.GRAY + index + ":" + ChatColor.GOLD + commands.get(index));
+                } else {
+                    output.add(ChatColor.GRAY + index.toString() + ":" + ChatColor.GOLD + commands.get(index));
+                }
             }
-            sender.sendMessage(ChatColor.WHITE + "    aliases:" + ChatColor.GRAY + " /hinfo");
-        }
-        if(sender.hasPermission("ccorral.bypass")) {
-            sender.sendMessage(ChatColor.WHITE + "/horse-bypass" + ChatColor.GRAY + " | Toggle horse access bypass.");
-            sender.sendMessage(ChatColor.WHITE + "    aliases:" + ChatColor.GRAY + " /hbypass");
+            sender.sendMessage(output.toArray(new String[output.size()]));
+            sender.sendMessage(ChatColor.GRAY + "Use " + ChatColor.GOLD + "/ccorral <#>" + ChatColor.GRAY + " to see detailed command help.");
+        } else {
+            //If a number was parsed from the command argument, replace the command argument with the command from the Map that matches the number.
+            if(topic > 0) {
+                command = commands.get(topic);
+            }
+            switch(command) {
+                case "/corral":
+                    sender.sendMessage(ChatColor.GRAY + "Command: " + ChatColor.GOLD + "/corral");
+                    sender.sendMessage(ChatColor.GRAY + "Parameters: " + ChatColor.GOLD + "None.");
+                    sender.sendMessage(ChatColor.WHITE + "Lock a horse that you have tamed, up to " + config.MAX_HORSES + " on this server.");
+                    sender.sendMessage(ChatColor.GRAY + "Aliases: " + ChatColor.GOLD + "/horse-lock" + ChatColor.GRAY + "," + ChatColor.GOLD + "/hlock");
+                    break;
+                case "/uncorral":
+                    sender.sendMessage(ChatColor.GRAY + "Command: " + ChatColor.GOLD + "/uncorral");
+                    if(sender.hasPermission("ccorral.admin")) {
+                        sender.sendMessage(ChatColor.DARK_GRAY + "Admin Parameters: " + ChatColor.GOLD + "<player> <horseID/name>");
+                        sender.sendMessage(ChatColor.DARK_GRAY + "Remotely unlock any player's horse.");
+                    } else {
+                        sender.sendMessage(ChatColor.GRAY + "Parameters: " + ChatColor.GOLD + "None.");
+                    }
+                    sender.sendMessage(ChatColor.WHITE + "Unlock one of your horses. This does not untame the horse, but it can now be ridden by anyone.");
+                    sender.sendMessage(ChatColor.GRAY + "Aliases: " + ChatColor.GOLD + "/horse-unlock" + ChatColor.GRAY + "," + ChatColor.GOLD + "/hunlock");
+                    break;
+                case "/horse-name":
+                    sender.sendMessage(ChatColor.GRAY + "Command: " + ChatColor.GOLD + "/horse-name");
+                    sender.sendMessage(ChatColor.GRAY + "Parameters: " + ChatColor.GOLD + "<nickname>");
+                    sender.sendMessage(ChatColor.WHITE + "Sets a nickname on the horse. This can be used in place of the horse ID in other commands. It is overwritten if you name the horse with a nametag.");
+                    sender.sendMessage(ChatColor.GRAY + "Aliases: " + ChatColor.GOLD + "/hname");
+                    break;
+                case "/testdrive":
+                    sender.sendMessage(ChatColor.GRAY + "Command: " + ChatColor.GOLD + "/testdrive");
+                    sender.sendMessage(ChatColor.GRAY + "Parameters: " + ChatColor.GOLD + "None.");
+                    sender.sendMessage(ChatColor.WHITE + "Allows anyone to ride this locked horse until server restart or this command is used to turn it off.");
+                    sender.sendMessage(ChatColor.GRAY + "Aliases: " + ChatColor.GOLD + "/horse-test" + ChatColor.GRAY + "," + ChatColor.GOLD + "/htest");
+                    break;
+                case "/horse-access":
+                    sender.sendMessage(ChatColor.GRAY + "Command: " + ChatColor.GOLD + "/horse-access");
+                    sender.sendMessage(ChatColor.GRAY + "Optional Parameters: " + ChatColor.GOLD + "<+/-><player>");
+                    sender.sendMessage(ChatColor.WHITE + "With no parameters, this will list everyone who can ride the locked horse. To add a rider use the" +
+                        ChatColor.GOLD + " + " + ChatColor.WHITE + "symbol followed by the player's name, or remove by using the" + ChatColor.GOLD + " - " + ChatColor.WHITE + "symbol instead.");
+                    sender.sendMessage(ChatColor.GRAY + "Aliases: " + ChatColor.GOLD + "/haccess" + ChatColor.GRAY + "," + ChatColor.GOLD + "/hacl");
+                    break;
+                case "/horse-free":
+                    sender.sendMessage(ChatColor.GRAY + "Command: " + ChatColor.GOLD + "/horse-free");
+                    sender.sendMessage(ChatColor.GRAY + "Parameters: " + ChatColor.GOLD + "None.");
+                    sender.sendMessage(ChatColor.WHITE + "Untames a horse that you own. This will also unlock the horse if necessary.");
+                    sender.sendMessage(ChatColor.GRAY + "Aliases: " + ChatColor.GOLD + "/hfree");
+                    break;
+                case "/horse-list":
+                    sender.sendMessage(ChatColor.GRAY + "Command: " + ChatColor.GOLD + "/horse-list");
+                    if(sender.hasPermission("ccorral.listall")) {
+                        sender.sendMessage(ChatColor.DARK_GRAY + "Admin Parameters: " + ChatColor.GOLD + "<player> <horseID/name>");
+                        sender.sendMessage(ChatColor.DARK_GRAY + "List all horses locked by a specific player.");
+                    }
+                    sender.sendMessage(ChatColor.GRAY + "Optional Parameters: " + ChatColor.GOLD + "<page>");
+                    sender.sendMessage(ChatColor.WHITE + "List all of the horses you have currently locked.");
+                    sender.sendMessage(ChatColor.GRAY + "Aliases: " + ChatColor.GOLD + "/hlist");
+                    break;
+                case "/horse-gps":
+                    sender.sendMessage(ChatColor.GRAY + "Command: " + ChatColor.GOLD + "/horse-gps");
+                    if(sender.hasPermission("ccorral.gpsall")) {
+                        sender.sendMessage(ChatColor.DARK_GRAY + "Admin Parameters: <player> <horseID/name>" );
+                        sender.sendMessage(ChatColor.DARK_GRAY + "Locate any player's horse.");
+                    }
+                    sender.sendMessage(ChatColor.GRAY + "Parameters: " + ChatColor.GOLD + "<horseID/name>");
+                    sender.sendMessage(ChatColor.WHITE + "Locate a locked horse by ID, nickname, or name as found in /horse-list.");
+                    sender.sendMessage(ChatColor.GRAY + "Aliases:" + ChatColor.GOLD + " /hgps");
+                    break;
+                case "/horse-tp":
+                    sender.sendMessage(ChatColor.GRAY + "Command: " + ChatColor.GOLD + "/horse-tp");
+                    sender.sendMessage(ChatColor.GRAY + "Parameters: " + ChatColor.GOLD + "<player> <horseID/name>");
+                    sender.sendMessage(ChatColor.WHITE + "Teleport any player's horse to your current location.");
+                    sender.sendMessage(ChatColor.GRAY + "Aliases: " + ChatColor.GOLD + "/htp");
+                    break;
+                case "/horse-info":
+                    sender.sendMessage(ChatColor.GRAY + "Command: " + ChatColor.GOLD + "/horse-info");
+                    if(sender.hasPermission("ccorral.gpsall")) {
+                        sender.sendMessage(ChatColor.DARK_GRAY + "Admin Parameters: <player> <horseID/name>" );
+                        sender.sendMessage(ChatColor.DARK_GRAY + "Remotely show info for a specific horse.");
+                    }
+                    sender.sendMessage(ChatColor.WHITE + "Display information about the horse including ownership and stats.");
+                    sender.sendMessage(ChatColor.GRAY + "Aliases: " + ChatColor.GOLD + "/hinfo");
+                    break;
+                case "/horse-bypass":
+                    sender.sendMessage(ChatColor.GRAY + "Command: " + ChatColor.GOLD + "/horse-bypass");
+                    sender.sendMessage(ChatColor.GRAY + "Parameters: " + ChatColor.GOLD + "None.");
+                    sender.sendMessage(ChatColor.WHITE + "Bypass the lock on a horse for moderation purposes. Command toggles on/off.");
+                    sender.sendMessage(ChatColor.GRAY + "Aliases: " + ChatColor.GOLD + "/hbypass");
+                    break;
+                default:
+                    sender.sendMessage(ChatColor.GRAY + "Command Not Found.");
+                    break;
+            }
         }
     }
     
@@ -252,10 +356,24 @@ public class Utils {
         return speed * 43;
     }
     
+    //Implimented algorithm from Zyin's HUD for jump height calculations.
+    public static double getJumpHeight(Horse horse) {
+        //simulate gravity and air resistance to determine the jump height
+    	double yVelocity = horse.getJumpStrength();	//horses's jump strength attribute
+    	double jumpHeight = 0;
+    	while (yVelocity > 0)
+    	{
+    		jumpHeight += yVelocity;
+    		yVelocity -= 0.08;
+    		yVelocity *= 0.98;
+    	}
+    	return jumpHeight;
+    }
+    
     //Custom function to teleport Horses, this allows for cross-world teleportation. Passengers do not work with this, but /horse-tp already will not teleport horses with riders anyway.
     public static void teleportHorse(Horse horse, Location toHere) {
         EntityHorse ehorse = ((CraftHorse)horse).getHandle();
-        net.minecraft.server.v1_8_R1.World toWorld = ((CraftWorld)toHere.getWorld()).getHandle();
+        net.minecraft.server.v1_8_R3.World toWorld = ((CraftWorld)toHere.getWorld()).getHandle();
         if(ehorse.world != toWorld) {
             ehorse.world.removeEntity(ehorse);
             ehorse.dead = false;

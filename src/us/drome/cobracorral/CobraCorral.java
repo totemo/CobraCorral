@@ -76,10 +76,10 @@ public class CobraCorral extends JavaPlugin {
                         config.reload();
                         sender.sendMessage(ChatColor.LIGHT_PURPLE + "[CobraCorral] Config Reloaded");
                     } else {
-                        utils.helpDisplay(sender);
+                        utils.helpDisplay(sender,args[0]);
                     }
                 } else {
-                    utils.helpDisplay(sender);
+                    utils.helpDisplay(sender,"");
                 }
                 break;
             case "corral":

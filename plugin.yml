@@ -11,9 +11,7 @@ permissions:
             ccorral.help: true
             ccorral.lock: true
             ccorral.free: true
-            ccorral.list: true
             ccorral.list-all: true
-            ccorral.gps: true
             ccorral.gps-all: true
             ccorral.tp: true
             ccorral.info: true
@@ -33,12 +31,16 @@ permissions:
     ccorral.list-all:
         description: List any player's locked Horses
         default: op
+        children:
+            ccorral.list: true
     ccorral.gps:
         description: Allows a player to locate a missing horse.
         default: true
     ccorral.gps-all:
         description: Locate any horse and display precise coordinates.
         default: op
+        children:
+            ccorral.gps: true
     ccorral.tp:
         description: Teleport a specific horse to your location.
         default: op
