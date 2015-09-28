@@ -37,6 +37,7 @@ import org.bukkit.inventory.HorseInventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.scheduler.BukkitRunnable;
+import org.bukkit.scheduler.BukkitScheduler;
 
 public class CorralListener implements Listener {
     CobraCorral plugin;
@@ -565,9 +566,15 @@ public class CorralListener implements Listener {
     }
     
     @EventHandler
-    public void onPlayerJoin(PlayerJoinEvent event) {
+    public void onPlayerJoin(final PlayerJoinEvent event) {
         //When a player joins the server, load their horses into the cache.
-        config.Database.getHorses(event.getPlayer().getUniqueId());
+        BukkitScheduler scheduler = plugin.getServer().getScheduler();
+        scheduler.runTaskAsynchronously(plugin, new Runnable(){
+            @Override
+            public void run() {
+                config.Database.getHorses(event.getPlayer().getUniqueId());
+            }
+        });
     }
     
     @EventHandler
@@ -588,7 +595,7 @@ public class CorralListener implements Listener {
         if(event.getFrom().getWorld().getEnvironment().equals(Environment.THE_END) && event.getEntity() instanceof Horse) {
             Horse horse = (Horse)event.getEntity();
             if(horse.getOwner() != null && horse.getPassenger() == null && ((Player)horse.getOwner()).getBedSpawnLocation() != null) {
-                Utils.teleportHorse(horse, ((Player)horse.getOwner()).getBedSpawnLocation());
+                horse.teleport(((Player)horse.getOwner()).getBedSpawnLocation());
                 event.setCancelled(true);
             }
         }

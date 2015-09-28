@@ -4,7 +4,7 @@
   <groupId>us.drome</groupId>
   <artifactId>CobraCorral</artifactId>
   <name>CobraCorral</name>
-  <version>1.2.2</version>
+  <version>1.2.3</version>
   <description>A Horse locking plugin for Bukkit</description>
   <issueManagement>
     <system>Github</system>
@@ -101,13 +101,7 @@
     <dependency>
       <groupId>mysql</groupId>
       <artifactId>mysql-connector-java</artifactId>
-      <version>5.1.6</version>
-      <scope>compile</scope>
-    </dependency>
-    <dependency>
-      <groupId>postgresql</groupId>
-      <artifactId>postgresql</artifactId>
-      <version>9.1-901-1.jdbc4</version>
+      <version>5.1.36</version>
       <scope>compile</scope>
     </dependency>
   </dependencies>

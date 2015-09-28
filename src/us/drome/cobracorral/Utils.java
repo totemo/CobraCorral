@@ -7,16 +7,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import net.minecraft.server.v1_8_R3.EntityHorse;
 import net.minecraft.server.v1_8_R3.NBTBase;
 import net.minecraft.server.v1_8_R3.NBTTagCompound;
 import net.minecraft.server.v1_8_R3.NBTTagList;
 import org.bukkit.ChatColor;
 import org.bukkit.Chunk;
-import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.command.CommandSender;
-import org.bukkit.craftbukkit.v1_8_R3.CraftWorld;
 import org.bukkit.craftbukkit.v1_8_R3.entity.CraftHorse;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Horse;
@@ -368,22 +365,6 @@ public class Utils {
     		yVelocity *= 0.98;
     	}
     	return jumpHeight;
-    }
-    
-    //Custom function to teleport Horses, this allows for cross-world teleportation. Passengers do not work with this, but /horse-tp already will not teleport horses with riders anyway.
-    public static void teleportHorse(Horse horse, Location toHere) {
-        EntityHorse ehorse = ((CraftHorse)horse).getHandle();
-        net.minecraft.server.v1_8_R3.World toWorld = ((CraftWorld)toHere.getWorld()).getHandle();
-        if(ehorse.world != toWorld) {
-            ehorse.world.removeEntity(ehorse);
-            ehorse.dead = false;
-            ehorse.world = toWorld;
-            ehorse.setLocation(toHere.getX(), toHere.getY(), toHere.getZ(), toHere.getYaw(), toHere.getPitch());
-            ehorse.world.addEntity(ehorse);
-        } else {
-            ehorse.getBukkitEntity().teleport(toHere);
-        }
-
     }
     
     public static boolean nameChecker(String name, String check) {

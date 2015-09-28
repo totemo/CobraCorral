@@ -316,7 +316,7 @@ public class CobraCorral extends JavaPlugin {
                                         ((Player) sender).playSound(((Player) sender).getLocation(), Sound.ENDERMAN_TELEPORT, 1f, 1f);
                                         sender.sendMessage(ChatColor.GRAY + lhorse.getName() + " " + lhorse.getAppearance()
                                                 + " has been teleported to your location!");
-                                        Utils.teleportHorse(horse, ((Player) sender).getLocation());
+                                        horse.teleport(((Player)sender).getLocation());
                                     } else {
                                         String passenger = horse.getPassenger() instanceof Player ? ((Player) horse.getPassenger()).getName() : horse.getPassenger().toString();
                                         sender.sendMessage(ChatColor.GRAY + lhorse.getName() + " " + lhorse.getAppearance()
