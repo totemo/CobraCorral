@@ -5,6 +5,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
@@ -200,6 +201,8 @@ public class Database {
             lhorse = cacheIterator.next();
             if(lhorse.getUUID().equals(horseID)) {
                 return lhorse;
+            } else {
+                lhorse = null;
             }
         }
         
@@ -294,7 +297,7 @@ public class Database {
         }
     }
     
-    public boolean batchAddLockedHorses(ArrayList<LockedHorse> lhorses) {
+    public boolean batchAddLockedHorses(List<LockedHorse> lhorses) {
         String horsesString = "INSERT OR IGNORE INTO HORSES VALUES (?,?,?,?,?,?,?,?,?,?,?,?)";
         String aclString = "INSERT OR IGNORE INTO ACL VALUES (?,?)";
         try {
@@ -323,6 +326,113 @@ public class Database {
             }
             database.runAsyncBatchUpdate(batchHorses);
             database.runAsyncBatchUpdate(batchACL);
+            return true;
+        } catch (Exception ex) {
+            database.getLogger().log(Level.SEVERE, null, ex);
+        }
+        return false;
+    }
+    
+    public Set<LockedHorse> batchGetLockedHorses(Collection<UUID> horseIDs) {
+        Set<LockedHorse> horses = new LinkedHashSet<>();
+        
+        //Iterate through the live cache and add the LockedHorses to the set, remove those UUIDs from the list.
+        Iterator<LockedHorse> cacheIterator = horseCache.iterator();
+        LockedHorse lhorse = null;
+        while(cacheIterator.hasNext()) {
+            lhorse = cacheIterator.next();
+            for(Iterator<UUID> iterator = horseIDs.iterator(); iterator.hasNext();) {
+                UUID id = iterator.next();
+                if(lhorse.getUUID().equals(id)) {
+                    horses.add(lhorse);
+                    iterator.remove();
+                }
+            }
+        }
+        
+        //Iterate through the remaining UUIDs and attempt to acquire them fromt he database.
+        String queryString = "SELECT * FROM HORSES LEFT JOIN ACL ON HORSES.UUID=ACL.Horse WHERE UUID = ?";
+        try (
+            Connection con = database.getConnection();
+            PreparedStatement query = con.prepareStatement(queryString);
+        ){
+            for(UUID id : horseIDs) {
+                query.setString(1, id.toString());
+                query.addBatch();
+            }
+            ResultSet result = query.executeQuery();
+
+            if(result.isBeforeFirst()) {
+                UUID uuid = null;
+                UUID owner = null;
+                String name = "";
+                String nickname = "";
+                String appearance = "";
+                String armor = "";
+                String saddle = "";
+                String chest = "";
+                String location = "";
+                int maxHealth = 0;
+                double maxSpeed = 0;
+                double jumpHeight = 0;
+                List<UUID> accessList = new ArrayList<>();
+                Map<UUID, LockedHorse> tempCache = new HashMap<>();
+                while(result.next()) {
+                    uuid = UUID.fromString(result.getString("UUID"));
+                    if(tempCache.containsKey(uuid)) {
+                        tempCache.get(uuid).getAccessList().add(UUID.fromString(result.getString("Player")));
+                    } else {
+                        owner = UUID.fromString(result.getString("Owner"));
+                        name = result.getString("Name");
+                        nickname = result.getString("Nickname");
+                        appearance = result.getString("Appearance");
+                        armor = result.getString("Armor");
+                        saddle = result.getString("Saddle");
+                        chest = result.getString("Chest");
+                        location = result.getString("Location");
+                        maxHealth = result.getInt("MaxHealth");
+                        maxSpeed = result.getDouble("MaxSpeed");
+                        jumpHeight = result.getDouble("JumpHeight");
+                        if(result.getString("Player") != null) {
+                            accessList.add(UUID.fromString(result.getString("Player")));
+                        }
+                        tempCache.put(uuid, new LockedHorse(uuid, owner, name, nickname, appearance, armor, saddle, chest, location, maxHealth, maxSpeed, jumpHeight, accessList));
+                    }
+                }
+                if(!tempCache.isEmpty()) {
+                    for(LockedHorse tempLhorse : tempCache.values()) {
+                        horseCache.add(tempLhorse);
+                        horses.add(tempLhorse);
+                    }
+                }
+            }
+        } catch (Exception ex) {
+            database.getLogger().log(Level.SEVERE, null, ex);
+        }
+        return horses;
+    }
+    
+    public boolean batchUpdateLockedHorses(Set<LockedHorse> lhorses) {
+        String updateString = "UPDATE HORSES SET UUID = ?, Owner = ?, Name = ?, Nickname = ?, Appearance = ?, Armor = ?, Saddle = ?,"
+                    + "Chest = ?, Location = ?, MaxHealth = ?, MaxSpeed = ?, JumpHeight = ? WHERE UUID = ?";
+        try {
+            PreparedStatement batchHorses = database.getConnection().prepareStatement(updateString);
+            for(LockedHorse lhorse : lhorses) {
+                batchHorses.setString(1, lhorse.getUUID().toString());
+                batchHorses.setString(2, lhorse.getOwner().toString());
+                batchHorses.setString(3, lhorse.getName());
+                batchHorses.setString(4, lhorse.getNickname());
+                batchHorses.setString(5, lhorse.getAppearance());
+                batchHorses.setString(6, lhorse.getArmor());
+                batchHorses.setString(7, lhorse.getSaddle());
+                batchHorses.setString(8, lhorse.getChest());
+                batchHorses.setString(9, lhorse.getLocation());
+                batchHorses.setInt(10, lhorse.getMaxHealth());
+                batchHorses.setDouble(11, lhorse.getMaxSpeed());
+                batchHorses.setDouble(12, lhorse.getJumpHeight());
+                batchHorses.addBatch();
+            }
+            database.runAsyncBatchUpdate(batchHorses);
             return true;
         } catch (Exception ex) {
             database.getLogger().log(Level.SEVERE, null, ex);
@@ -374,6 +484,21 @@ public class Database {
             Connection con = database.getConnection();
             PreparedStatement query = con.prepareStatement(queryString);
         ){
+            ResultSet result = query.executeQuery();
+            return result.getInt(1);
+        } catch (Exception ex) {
+            database.getLogger().log(Level.SEVERE, null, ex);
+        }
+        return 0;
+    }
+    
+    public int countLocked(UUID playerID) {
+        String queryString = "SELECT COUNT(UUID) FROM HORSES WHERE Owner = ?";
+        try (
+            Connection con = database.getConnection();
+            PreparedStatement query = con.prepareStatement(queryString);
+        ){
+            query.setString(1, playerID.toString());
             ResultSet result = query.executeQuery();
             return result.getInt(1);
         } catch (Exception ex) {

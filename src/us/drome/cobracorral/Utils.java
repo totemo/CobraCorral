@@ -2,10 +2,8 @@ package us.drome.cobracorral;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 import net.minecraft.server.v1_8_R3.NBTBase;
 import net.minecraft.server.v1_8_R3.NBTTagCompound;
@@ -73,15 +71,7 @@ public class Utils {
         if(config.MAX_HORSES == 0) {
             return false;
         }
-        int count = 0;
-        Set<LockedHorse> horses = config.Database.getHorses(playerID);
-        Iterator<LockedHorse> horseIterator = horses.iterator();
-        while(horseIterator.hasNext()) {
-            if(horseIterator.next().getOwner().equals(playerID)) {
-                count++;
-            }
-        }
-        if(count >= config.MAX_HORSES) //check for > just in case.
+        if(config.Database.countLocked(playerID) >= config.MAX_HORSES) //check for > just in case.
             return true;
         else
             return false;
@@ -200,6 +190,9 @@ public class Utils {
         if(sender.hasPermission("ccorall.bypass")) {
             commands.put(order,"/horse-bypass"); order++;
         }
+        if(sender.hasPermission("ccorral.tame")) {
+            commands.put(order,"/horse-tame"); order++;
+        }
         
         //If the topic is 0 and command argument is empty, display the command list in 2 columns of 8 lines.
         if(topic == 0 && command.isEmpty()) {
@@ -307,6 +300,12 @@ public class Utils {
                     sender.sendMessage(ChatColor.GRAY + "Parameters: " + ChatColor.GOLD + "None.");
                     sender.sendMessage(ChatColor.WHITE + "Bypass the lock on a horse for moderation purposes. Command toggles on/off.");
                     sender.sendMessage(ChatColor.GRAY + "Aliases: " + ChatColor.GOLD + "/hbypass");
+                    break;
+                case "/horse-tame":
+                    sender.sendMessage(ChatColor.GRAY + "Command: " + ChatColor.GOLD + "/horse-tame");
+                    sender.sendMessage(ChatColor.GRAY + "Optional Parameters: " + ChatColor.GOLD + "<player>");
+                    sender.sendMessage(ChatColor.WHITE + "Tame a horse to yourself or another player, this overrides current owner.");
+                    sender.sendMessage(ChatColor.GRAY + "Aliases: " + ChatColor.GOLD + "/htame");
                     break;
                 default:
                     sender.sendMessage(ChatColor.GRAY + "Command Not Found.");

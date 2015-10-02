@@ -32,7 +32,7 @@ public abstract class SQLEngine {
     }
 
     public void runAsyncUpdate (final PreparedStatement update) {
-        queryExecutor.execute(new Runnable() {
+        queryExecutor.submit(new Runnable() {
            @Override
            public void run() {
                runUpdate(update);
@@ -41,7 +41,7 @@ public abstract class SQLEngine {
     }
     
     public void runAsyncBatchUpdate (final PreparedStatement batchUpdate) {
-                queryExecutor.execute(new Runnable() {
+                queryExecutor.submit(new Runnable() {
            @Override
            public void run() {
                runBatchUpdate(batchUpdate);

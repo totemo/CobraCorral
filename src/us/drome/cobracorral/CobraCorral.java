@@ -30,6 +30,7 @@ public class CobraCorral extends JavaPlugin {
     public static final String HORSE_FREE = "CobraCorral.free";
     public static final String HORSE_NAME = "CobraCorral.name";
     public static final String HORSE_BYPASS = "CobraCorral.bypass";
+    public static final String HORSE_TAME = "CobraCorral.tame";
 
     @Override
     public void onDisable() {
@@ -311,12 +312,12 @@ public class CobraCorral extends JavaPlugin {
                             if ((target != -1 && count == target) || (!name.isEmpty() && Utils.nameChecker(lhorse.getName(), name))) {
                                 Horse horse = utils.getHorse(lhorse);
                                 if (horse != null) {
-                                    utils.updateHorse(lhorse, horse);
                                     if (horse.getPassenger() == null) {
                                         ((Player) sender).playSound(((Player) sender).getLocation(), Sound.ENDERMAN_TELEPORT, 1f, 1f);
                                         sender.sendMessage(ChatColor.GRAY + lhorse.getName() + " " + lhorse.getAppearance()
                                                 + " has been teleported to your location!");
                                         horse.teleport(((Player)sender).getLocation());
+                                        utils.updateHorse(lhorse, horse);
                                     } else {
                                         String passenger = horse.getPassenger() instanceof Player ? ((Player) horse.getPassenger()).getName() : horse.getPassenger().toString();
                                         sender.sendMessage(ChatColor.GRAY + lhorse.getName() + " " + lhorse.getAppearance()
@@ -407,6 +408,23 @@ public class CobraCorral extends JavaPlugin {
                     } else {
                         player.removeMetadata(CobraCorral.HORSE_BYPASS, this);
                         sender.sendMessage(ChatColor.GRAY + "Horse access bypassing has been toggled off.");
+                    }
+                }
+                break;
+            case "horse-tame":
+                if (sender instanceof Player) {
+                    Player player = (Player) sender;
+                    if (args.length > 0) {
+                        if (getServer().getOfflinePlayer(args[0]).hasPlayedBefore()) {
+                            player.setMetadata(HORSE_TAME, new FixedMetadataValue(this,getServer().getOfflinePlayer(args[0]).getUniqueId().toString()));
+                            sender.sendMessage(ChatColor.GRAY + "Right click on a Horse to tame it to " + args[0] +".");
+                        } else {
+                            sender.sendMessage(ChatColor.GRAY + args[0] + " is not a valid player.");
+                            return false;
+                        }
+                    } else {
+                        player.setMetadata(HORSE_TAME, new FixedMetadataValue(this,player.getUniqueId().toString()));
+                        sender.sendMessage(ChatColor.GRAY + "Right click on a Horse to tame it.");
                     }
                 }
                 break;

@@ -4,7 +4,7 @@
   <groupId>us.drome</groupId>
   <artifactId>CobraCorral</artifactId>
   <name>CobraCorral</name>
-  <version>1.2.3</version>
+  <version>1.2.4</version>
   <description>A Horse locking plugin for Bukkit</description>
   <issueManagement>
     <system>Github</system>

@@ -16,6 +16,7 @@ permissions:
             ccorral.tp: true
             ccorral.info: true
             ccorral.bypass: true
+            ccorral.tame: true
     ccorral.help:
         description: Show command reference
         default: true
@@ -49,6 +50,9 @@ permissions:
         default: true
     ccorral.bypass:
         description: Allows someone to bypass all horse access restrictions.
+        default: op
+    ccorral.tame:
+        description: Tame a horse to yourself or specified player.
         default: op
 
 commands:
@@ -111,3 +115,8 @@ commands:
         permission: ccorral.bypass
         usage: /horse-bypass
         aliases: ['hbypass']
+    horse-tame:
+        description: Tame a horse to yourself or a player.
+        permission: ccorral.tame
+        usage: /horse-tame <player>
+        aliases: ['htame']
