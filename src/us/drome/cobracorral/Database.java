@@ -137,7 +137,10 @@ public class Database {
         ){  
             query.setString(1, playerID.toString());
             try (ResultSet result = query.executeQuery(); ){
-                return result.getInt(1);
+                if(result.isBeforeFirst()) {
+                    result.next();
+                    return result.getInt(1);
+                }
             }
         } catch (Exception ex) {
             database.getLogger().log(Level.SEVERE, null, ex);
