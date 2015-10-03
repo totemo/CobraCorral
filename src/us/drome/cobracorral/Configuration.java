@@ -97,7 +97,7 @@ public class Configuration {
                             LockedHorse lhorse = new LockedHorse(uuid, olhorse.getOwner(), olhorse.getName(), "", olhorse.getAppearance(), olhorse.getAppearance(), "", "", olhorse.getLocation(), 0, 0, 0, olhorse.getAccessList());
                             convertedHorses.add(lhorse);
                         }
-                        Database.batchAddLockedHorses((ArrayList<LockedHorse>) convertedHorses);
+                        Database.addHorses((ArrayList<LockedHorse>) convertedHorses);
                         plugin.getConfig().set("horses", null);
                         save();
                     }

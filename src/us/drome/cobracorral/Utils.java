@@ -263,7 +263,7 @@ public class Utils {
                 case "/horse-list":
                     sender.sendMessage(ChatColor.GRAY + "Command: " + ChatColor.GOLD + "/horse-list");
                     if(sender.hasPermission("ccorral.listall")) {
-                        sender.sendMessage(ChatColor.DARK_GRAY + "Admin Parameters: " + ChatColor.GOLD + "<player> <horseID/name>");
+                        sender.sendMessage(ChatColor.DARK_GRAY + "Admin Parameters: " + ChatColor.GOLD + "<player> <page>");
                         sender.sendMessage(ChatColor.DARK_GRAY + "List all horses locked by a specific player.");
                     }
                     sender.sendMessage(ChatColor.GRAY + "Optional Parameters: " + ChatColor.GOLD + "<page>");

@@ -78,6 +78,11 @@ public class LockedHorse {
         return this;
     }
     
+    public LockedHorse updateLocation(Location horseLoc) {
+        location = horseLoc.getBlockX() + ":" + horseLoc.getBlockY() + ":" + horseLoc.getBlockZ() + ":" + horseLoc.getWorld().getName();
+        return this;
+    }
+    
     public UUID getUUID() {
         return uuid;
     }

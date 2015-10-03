@@ -2,13 +2,13 @@ package us.drome.cobracorral;
 
 import java.text.DecimalFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import org.bukkit.ChatColor;
+import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.World.Environment;
@@ -68,14 +68,14 @@ public class CorralListener implements Listener {
             Horse horse = (Horse)event.getRightClicked();
             
             //If the horse is a locked horse, update it's cache to be current.
-            LockedHorse lhorse = null;
+            LockedHorse lhorse;
             if((lhorse = config.Database.getHorse(horse.getUniqueId())) != null) {
                 utils.updateHorse(lhorse, horse);
             }
             
             /*
             Auto-unlocker Code
-            If the horse has no owner and this horse is still locked, removeHorse it.
+            If the horse has no owner and this horse is still locked, unlock it.
             This is to support non-CobraCorral implemented untame commands.
             */
             if(horse.getOwner() == null && lhorse != null) {
@@ -409,7 +409,16 @@ public class CorralListener implements Listener {
         horse.setOwner(plugin.getServer().getOfflinePlayer(newOwner));
         player.sendMessage(ChatColor.GRAY + "This horse now belongs to " + ChatColor.GOLD + plugin.getServer().getOfflinePlayer(newOwner).getName() + ChatColor.GRAY + ".");
         player.playSound(player.getLocation(), Sound.HORSE_SADDLE, 1f, 1f);
-        plugin.getServer().getPluginManager().callEvent(new EntityTameEvent(horse,plugin.getServer().getOfflinePlayer(newOwner)));
+        if(utils.maxHorsesLocked(newOwner)){
+            player.sendMessage(ChatColor.GRAY + "That horse could not be locked as the new owner cannot lock any new horses.");
+        } else if (!utils.isHorseLocked(horse)) {
+            utils.lockHorse(horse, newOwner);
+            player.playSound(player.getLocation(), Sound.CLICK, 1f, 1f);
+            player.sendMessage(ChatColor.GRAY + "This horse has been locked.");
+            plugin.getLogger().info(player.getName() + " tamed and autolocked " + (horse.getCustomName() != null ?
+                horse.getCustomName() : horse.getVariant().toString()) + " with UUID " +
+                horse.getUniqueId().toString());
+        }
         if(lhorse != null) {
             lhorse.setOwner(newOwner);
             utils.updateHorse(lhorse, horse);
@@ -574,7 +583,6 @@ public class CorralListener implements Listener {
     @EventHandler
     public void onPlayerQuit(PlayerQuitEvent event) {
         Player player = event.getPlayer();
-        config.Database.clearCache(player.getUniqueId());
         if(player.getVehicle() != null && config.EJECT_ON_LOGOFF) {
             if(player.getVehicle() instanceof Horse) {
                 Horse horse = (Horse)player.getVehicle();
@@ -598,25 +606,25 @@ public class CorralListener implements Listener {
     
     @EventHandler
     public void onChunkUnload(ChunkUnloadEvent event) {
-        List<UUID> horses = new ArrayList();
-        List<Entity> entities = Arrays.asList(event.getChunk().getEntities());
-        for(Entity entity : entities) {
+        final Map<UUID,Location> horses = new HashMap();
+        for(Entity entity : event.getChunk().getEntities()) {
             if(entity instanceof Horse) {
-               horses.add(entity.getUniqueId());
+                horses.put(entity.getUniqueId(), entity.getLocation());
             }
         }
         if(!horses.isEmpty()) {
-            Set<LockedHorse> lhorses = config.Database.batchGetLockedHorses(horses);
-            for(Entity entity : entities) {
-                if(entity instanceof Horse) {
-                   for(LockedHorse lhorse : lhorses) {
-                       if(lhorse.getUUID().equals(entity.getUniqueId())) {
-                           lhorse.updateHorse((Horse)entity);
-                       }
-                   }
+            scheduler.runTaskAsynchronously(plugin, new Runnable(){
+                @Override
+                public void run() {
+                    Set<LockedHorse> lhorses = config.Database.getHorsesByID(horses.keySet());
+                    for(LockedHorse lhorse : lhorses) {
+                        if(horses.containsKey(lhorse.getUUID())) {
+                            lhorse.updateLocation(horses.get(lhorse.getUUID()));
+                        }
+                    }
+                    config.Database.updateHorses(lhorses);
                 }
-            }
-            config.Database.batchUpdateLockedHorses(lhorses);
+            });
         }
     }
     
