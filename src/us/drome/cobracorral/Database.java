@@ -534,6 +534,7 @@ public class Database {
                 batchHorses.setInt(10, lhorse.getMaxHealth());
                 batchHorses.setDouble(11, lhorse.getMaxSpeed());
                 batchHorses.setDouble(12, lhorse.getJumpHeight());
+                batchHorses.setString(13, lhorse.getUUID().toString());
                 batchHorses.addBatch();
             }
             database.runAsyncBatchUpdate(batchHorses);
