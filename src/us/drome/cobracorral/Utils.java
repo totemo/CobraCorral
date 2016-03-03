@@ -126,6 +126,8 @@ public class Utils {
             player.removeMetadata(CobraCorral.HORSE_FREE, plugin);
         } else if (player.hasMetadata(CobraCorral.HORSE_NAME)) {
             player.removeMetadata(CobraCorral.HORSE_NAME, plugin);
+        } else if (player.hasMetadata(CobraCorral.HORSE_TAME)) {
+            player.removeMetadata(CobraCorral.HORSE_TAME, plugin);
         }
     }
     
@@ -144,6 +146,8 @@ public class Utils {
         } else if (player.hasMetadata(CobraCorral.HORSE_FREE)) {
             return true;
         } else if (player.hasMetadata(CobraCorral.HORSE_NAME)) {
+            return true;
+        } else if (player.hasMetadata(CobraCorral.HORSE_TAME)) {
             return true;
         } else {
             return false;

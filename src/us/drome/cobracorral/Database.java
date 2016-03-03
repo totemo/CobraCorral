@@ -409,6 +409,8 @@ public class Database {
                 }
             }
         }
+
+        if (horseIDs.size() <= 0) return horses; //stop SQL errors
         
         //Iterate through the remaining UUIDs and attempt to acquire them from the database.
         
