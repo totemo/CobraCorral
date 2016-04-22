@@ -109,8 +109,8 @@ public class CobraCorral extends JavaPlugin {
                             count++;
                             if ((target > 0 && count == target) || (!name.isEmpty() && Utils.nameChecker(lhorse.getName(), name))) {
                                 utils.unlockHorse(playerID);
-                                ((Player) sender).playSound(((Player) sender).getLocation(), Sound.CLICK, 1f, 1f);
-                                ((Player) sender).playSound(((Player) sender).getLocation(), Sound.ANVIL_USE, 1f, 1f);
+                                ((Player) sender).playSound(((Player) sender).getLocation(), Sound.BLOCK_DISPENSER_DISPENSE, 1f, 1f);
+                                ((Player) sender).playSound(((Player) sender).getLocation(), Sound.BLOCK_ANVIL_USE, 1f, 1f);
                                 getLogger().info(((Player) sender).getName() + " unlocked " + getServer().getOfflinePlayer(lhorse.getOwner()).getName()
                                         + "'s horse " + lhorse.getName() + " with UUID " + lhorse.getUUID().toString());
                                 sender.sendMessage(ChatColor.GRAY + args[0] + "'s horse " + lhorse.getName() + " has been unlocked.");
@@ -257,11 +257,11 @@ public class CobraCorral extends JavaPlugin {
 
                                 if (horse != null) {
                                     utils.updateHorse(lhorse, horse);
-                                    player.playSound(player.getLocation(), Sound.SUCCESSFUL_HIT, 1f, 1f);
+                                    player.playSound(player.getLocation(), Sound.ENTITY_ARROW_HIT_PLAYER, 1f, 1f);
                                     player.sendMessage(ChatColor.GRAY + lhorse.getName() + " Located @ X:" + lhorse.getX()
                                             + " Y:" + lhorse.getY() + " Z:" + lhorse.getZ() + " World:" + lhorse.getWorld());
                                 } else {
-                                    player.playSound(player.getLocation(), Sound.ITEM_BREAK, 1f, 1f);
+                                    player.playSound(player.getLocation(), Sound.ENTITY_ITEM_BREAK, 1f, 1f);
                                     player.sendMessage(ChatColor.GRAY + lhorse.getName() + " could not be located.");
                                     player.sendMessage(ChatColor.GRAY + lhorse.getName() + "'s last known location @ X:" + lhorse.getX()
                                             + " Y:" + lhorse.getY() + " Z:" + lhorse.getZ() + " World:" + lhorse.getWorld());
@@ -313,7 +313,7 @@ public class CobraCorral extends JavaPlugin {
                                 Horse horse = utils.getHorse(lhorse);
                                 if (horse != null) {
                                     if (horse.getPassenger() == null) {
-                                        ((Player) sender).playSound(((Player) sender).getLocation(), Sound.ENDERMAN_TELEPORT, 1f, 1f);
+                                        ((Player) sender).playSound(((Player) sender).getLocation(), Sound.ENTITY_ENDERMEN_TELEPORT, 1f, 1f);
                                         sender.sendMessage(ChatColor.GRAY + lhorse.getName() + " " + lhorse.getAppearance()
                                                 + " has been teleported to your location!");
                                         horse.teleport(((Player)sender).getLocation());

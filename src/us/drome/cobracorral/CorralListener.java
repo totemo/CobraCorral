@@ -47,32 +47,32 @@ public class CorralListener implements Listener {
     Configuration config;
     Utils utils;
     BukkitScheduler scheduler;
-    
+
     private List<UUID> onCooldown = new ArrayList<>();
-    
+
     CorralListener(CobraCorral plugin) {
         this.plugin = plugin;
         config = plugin.config;
         utils = plugin.utils;
         scheduler = plugin.getServer().getScheduler();
     }
-    
+
     public void registerEvents() {
         plugin.getServer().getPluginManager().registerEvents(this, plugin);
     }
-    
+
     @EventHandler
     public void onPlayerInteractEntity(PlayerInteractEntityEvent event) {
         Player player = event.getPlayer();
         if(event.getRightClicked() instanceof Horse) {
             Horse horse = (Horse)event.getRightClicked();
-            
+
             //If the horse is a locked horse, update it's cache to be current.
             LockedHorse lhorse;
             if((lhorse = config.Database.getHorse(horse.getUniqueId())) != null) {
                 utils.updateHorse(lhorse, horse);
             }
-            
+
             /*
             Auto-unlocker Code
             If the horse has no owner and this horse is still locked, unlock it.
@@ -87,7 +87,7 @@ public class CorralListener implements Listener {
                     horse.getCustomName() : horse.getVariant().toString()) + " with UUID " + horse.getUniqueId().toString() +
                         " due to the horse having no owner.");
             }
-            
+
             if(player.hasMetadata(CobraCorral.HORSE_INFO)) {
                 horseInfo(player, horse, lhorse);
                 utils.clearMetaKeys(player);
@@ -153,13 +153,13 @@ public class CorralListener implements Listener {
             }
         }
     }
-    
+
     /*
     HORSE_INFO Method
     Display detailed information on the horse that was right-clicked.
     */
     private void horseInfo(Player player, Horse horse, LockedHorse lhorse) {
-        player.playSound(player.getLocation(), Sound.ORB_PICKUP, 1f, 1f);
+        player.playSound(player.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1f, 1f);
         if(player.hasPermission("ccorral.admin")) {
             player.sendMessage(ChatColor.GRAY + "UUID: " + ChatColor.GOLD + horse.getUniqueId());
         }
@@ -181,7 +181,7 @@ public class CorralListener implements Listener {
         player.sendMessage(ChatColor.GRAY + "Speed: " + ChatColor.GOLD + df.format(Utils.getSpeed(horse)) + "m/s");
         player.sendMessage(ChatColor.GRAY + "Jump Height: " + ChatColor.GOLD + df.format(Utils.getJumpHeight(horse)) + "m");
     }
-    
+
     /*
     HORSE_LOCK Method
     If the player owns the horse or is an admin, lock the horse to the current horse owner.
@@ -196,24 +196,24 @@ public class CorralListener implements Listener {
                         utils.lockHorse(horse, horse.getOwner().getUniqueId());
                         player.sendMessage(ChatColor.GRAY + (horse.getCustomName() != null ?
                             horse.getCustomName() : horse.getVariant().toString()) + " has been locked.");
-                        player.playSound(player.getLocation(), Sound.CLICK, 1f, 1f);
+                        player.playSound(player.getLocation(), Sound.BLOCK_DISPENSER_DISPENSE, 1f, 1f);
                         plugin.getLogger().info(player.getName() + " locked " + (horse.getCustomName() != null ?
                             horse.getCustomName() : horse.getVariant().toString()) + " with UUID " + horse.getUniqueId().toString());
                     }
                 } else {
                     player.sendMessage(ChatColor.GRAY + (horse.getCustomName() != null ?
                         horse.getCustomName() : horse.getVariant().toString()) + " is already locked.");
-                    player.playSound(player.getLocation(), Sound.ITEM_BREAK, 1f, 1f);
+                    player.playSound(player.getLocation(), Sound.ENTITY_ITEM_BREAK, 1f, 1f);
                 }
             } else {
                 player.sendMessage(ChatColor.GRAY + "You cannot lock any more horses.");
             }
         } else {
             player.sendMessage(ChatColor.GRAY + "You do not own that horse.");
-            player.playSound(player.getLocation(), Sound.ITEM_BREAK, 1f, 1f); 
+            player.playSound(player.getLocation(), Sound.ENTITY_ITEM_BREAK, 1f, 1f);
         }
     }
-    
+
     /*
     HORSE_TEST_DRIVE Method
     Toggles the test-drive status of a locked horse, allowing anyone to ride it.
@@ -225,15 +225,15 @@ public class CorralListener implements Listener {
                     horse.removeMetadata(CobraCorral.HORSE_TEST_DRIVE, plugin);
                     player.sendMessage(ChatColor.GRAY + (horse.getCustomName() != null ?
                         horse.getCustomName() : horse.getVariant().toString()) + " has been set to locked mode.");
-                    player.playSound(player.getLocation(), Sound.CLICK, 1f, 1f);
-                    player.playSound(player.getLocation(), Sound.ORB_PICKUP, 1f, 1f);
+                    player.playSound(player.getLocation(), Sound.BLOCK_DISPENSER_DISPENSE, 1f, 1f);
+                    player.playSound(player.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1f, 1f);
                     plugin.getLogger().info(player.getName() + " disabled testdrive for " + (horse.getCustomName() != null ?
                         horse.getCustomName() : horse.getVariant().toString()) + " with UUID " + horse.getUniqueId().toString());
                     if(horse.getPassenger() != null) {
                         if(horse.getPassenger() instanceof Player) {
                             Player passenger = (Player)horse.getPassenger();
                             passenger.sendMessage(ChatColor.GRAY + "Your test drive has been cancelled.");
-                            passenger.playSound(passenger.getLocation(), Sound.HORSE_SADDLE, 1f, 1f);
+                            passenger.playSound(passenger.getLocation(), Sound.ENTITY_HORSE_SADDLE, 1f, 1f);
                         }
                         horse.eject();
                     }
@@ -241,22 +241,22 @@ public class CorralListener implements Listener {
                     horse.setMetadata(CobraCorral.HORSE_TEST_DRIVE, new FixedMetadataValue(plugin, null));
                     player.sendMessage(ChatColor.GRAY + (horse.getCustomName() != null ?
                         horse.getCustomName() : horse.getVariant().toString()) + " has been set to test drive mode.");
-                    player.playSound(player.getLocation(), Sound.CLICK, 1f, 1f);
-                    player.playSound(player.getLocation(), Sound.ORB_PICKUP, 1f, 1f);
+                    player.playSound(player.getLocation(), Sound.BLOCK_DISPENSER_DISPENSE, 1f, 1f);
+                    player.playSound(player.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1f, 1f);
                     plugin.getLogger().info(player.getName() + " enabled testdrive for " + (horse.getCustomName() != null ?
                         horse.getCustomName() : horse.getVariant().toString()) + " with UUID " + horse.getUniqueId().toString());
                 }
             } else {
                 player.sendMessage(ChatColor.GRAY + (horse.getCustomName() != null ?
                     horse.getCustomName() : horse.getVariant().toString()) + " is not locked.");
-                player.playSound(player.getLocation(), Sound.ITEM_BREAK, 1f, 1f);
+                player.playSound(player.getLocation(), Sound.ENTITY_ITEM_BREAK, 1f, 1f);
             }
         } else {
             player.sendMessage(ChatColor.GRAY + "You do not own that horse.");
-            player.playSound(player.getLocation(), Sound.ITEM_BREAK, 1f, 1f); 
+            player.playSound(player.getLocation(), Sound.ENTITY_ITEM_BREAK, 1f, 1f);
         }
     }
-    
+
     /*
     HORSE_UNLOCK Method
     If the player owns the horse or is an admin, unlock the horse if it is currently locked.
@@ -267,22 +267,22 @@ public class CorralListener implements Listener {
                 utils.unlockHorse(horse.getUniqueId());
                 player.sendMessage(ChatColor.GRAY + (horse.getCustomName() != null ?
                     horse.getCustomName() : horse.getVariant().toString())+ " has been unlocked.");
-                player.playSound(player.getLocation(), Sound.CLICK, 1f, 1f);
-                player.playSound(player.getLocation(), Sound.ANVIL_USE, 1f, 1f);
+                player.playSound(player.getLocation(), Sound.BLOCK_DISPENSER_DISPENSE, 1f, 1f);
+                player.playSound(player.getLocation(), Sound.BLOCK_ANVIL_USE, 1f, 1f);
                 plugin.getLogger().info(player.getName() + " unlocked " + horse.getOwner().getName() + "'s horse " +
                     (horse.getCustomName() != null ? horse.getCustomName() : horse.getVariant().toString()) +
                     " with UUID " + horse.getUniqueId().toString());
             } else {
                 player.sendMessage(ChatColor.GRAY + (horse.getCustomName() != null ?
                     horse.getCustomName() : horse.getVariant().toString()) + " is not locked.");
-                player.playSound(player.getLocation(), Sound.ITEM_BREAK, 1f, 1f);
+                player.playSound(player.getLocation(), Sound.ENTITY_ITEM_BREAK, 1f, 1f);
             }
         } else {
             player.sendMessage(ChatColor.GRAY + "You do not own that horse.");
-            player.playSound(player.getLocation(), Sound.ITEM_BREAK, 1f, 1f); 
+            player.playSound(player.getLocation(), Sound.ENTITY_ITEM_BREAK, 1f, 1f);
         }
     }
-    
+
     /*
     HORSE_FREE Method
     If the player owns the horse or is an admin, untame the horse and safely drop its inventory and reset it's stats.
@@ -310,14 +310,14 @@ public class CorralListener implements Listener {
             horse.setDomestication(1);
             horse.setCustomName(null);
             player.sendMessage(ChatColor.GRAY + horse.getVariant().toString() + " has been set free.");
-            player.playSound(player.getLocation(), Sound.CLICK, 1f, 1f);
-            player.playSound(player.getLocation(), Sound.ANVIL_USE, 1f, 1f);
+            player.playSound(player.getLocation(), Sound.BLOCK_DISPENSER_DISPENSE, 1f, 1f);
+            player.playSound(player.getLocation(), Sound.BLOCK_ANVIL_USE, 1f, 1f);
         } else {
             player.sendMessage(ChatColor.GRAY + "You do not own that horse.");
-            player.playSound(player.getLocation(), Sound.ITEM_BREAK, 1f, 1f); 
+            player.playSound(player.getLocation(), Sound.ENTITY_ITEM_BREAK, 1f, 1f);
         }
     }
-    
+
     /*
     HORSE_ACCESS Method
     Provide for the ability to add/remove/list the players allowed to ride this horse.
@@ -346,8 +346,8 @@ public class CorralListener implements Listener {
                     UUID targetID = UUID.fromString(accessChange.substring(1));
                     if(grantRevoke.equals('+')) {
                         if(utils.grantAccess(config.Database.getHorse(horse.getUniqueId()), targetID)) {
-                            player.playSound(player.getLocation(), Sound.PISTON_EXTEND, 1f, 1f);
-                            player.playSound(player.getLocation(), Sound.CLICK, 1f, 1f);
+                            player.playSound(player.getLocation(), Sound.BLOCK_PISTON_EXTEND, 1f, 1f);
+                            player.playSound(player.getLocation(), Sound.BLOCK_DISPENSER_DISPENSE, 1f, 1f);
                             player.sendMessage(ChatColor.GRAY + "Added " + plugin.getServer().getOfflinePlayer(targetID).getName() + " to the access list.");
                             plugin.getLogger().info(player.getName() + " has added " + plugin.getServer().getOfflinePlayer(targetID).getName() +
                                 " to the access list of horse " + horse.getUniqueId());
@@ -356,8 +356,8 @@ public class CorralListener implements Listener {
                         }
                     } else {
                         if(utils.revokeAccess(config.Database.getHorse(horse.getUniqueId()), targetID)) {
-                            player.playSound(player.getLocation(), Sound.PISTON_RETRACT, 1f, 1f);
-                            player.playSound(player.getLocation(), Sound.CLICK, 1f, 1f);
+                            player.playSound(player.getLocation(), Sound.BLOCK_PISTON_CONTRACT, 1f, 1f);
+                            player.playSound(player.getLocation(), Sound.BLOCK_DISPENSER_DISPENSE, 1f, 1f);
                             player.sendMessage(ChatColor.GRAY + "Removed " + plugin.getServer().getOfflinePlayer(targetID).getName() + " from the access list.");
                             plugin.getLogger().info(player.getName() + " has removed " + plugin.getServer().getOfflinePlayer(targetID).getName() +
                                 " from the access list of horse " + horse.getUniqueId());
@@ -371,10 +371,10 @@ public class CorralListener implements Listener {
             }
         } else {
             player.sendMessage(ChatColor.GRAY + "You do not own that horse.");
-            player.playSound(player.getLocation(), Sound.ITEM_BREAK, 1f, 1f); 
+            player.playSound(player.getLocation(), Sound.ENTITY_ITEM_BREAK, 1f, 1f);
         }
     }
-    
+
     /*
     HORSE_NAME Method
     Allows a player to give a nickname to their locked horse.
@@ -386,7 +386,7 @@ public class CorralListener implements Listener {
                 if(lhorse.getName().equals(horse.getCustomName())) {
                     player.sendMessage(ChatColor.GRAY + "You cannot nickname a named horse.");
                 } else {
-                    player.playSound(player.getLocation(), Sound.DIG_STONE, 1f, 1f);
+                    player.playSound(player.getLocation(), Sound.BLOCK_STONE_BREAK, 1f, 1f);
                     lhorse.setNickname(nickname);
                     utils.updateHorse(lhorse, horse);
                 }
@@ -395,10 +395,10 @@ public class CorralListener implements Listener {
             }
         } else {
             player.sendMessage(ChatColor.GRAY + "You do not own that horse.");
-            player.playSound(player.getLocation(), Sound.ITEM_BREAK, 1f, 1f); 
+            player.playSound(player.getLocation(), Sound.ENTITY_ITEM_BREAK, 1f, 1f);
         }
     }
-    
+
     /*
     HORSE_TAME Method
     Tames a horse to the current player or the provided player.
@@ -408,12 +408,12 @@ public class CorralListener implements Listener {
         horse.setTamed(true);
         horse.setOwner(plugin.getServer().getOfflinePlayer(newOwner));
         player.sendMessage(ChatColor.GRAY + "This horse now belongs to " + ChatColor.GOLD + plugin.getServer().getOfflinePlayer(newOwner).getName() + ChatColor.GRAY + ".");
-        player.playSound(player.getLocation(), Sound.HORSE_SADDLE, 1f, 1f);
+        player.playSound(player.getLocation(), Sound.ENTITY_HORSE_SADDLE, 1f, 1f);
         if(utils.maxHorsesLocked(newOwner)){
             player.sendMessage(ChatColor.GRAY + "That horse could not be locked as the new owner cannot lock any new horses.");
         } else if (!utils.isHorseLocked(horse)) {
             utils.lockHorse(horse, newOwner);
-            player.playSound(player.getLocation(), Sound.CLICK, 1f, 1f);
+            player.playSound(player.getLocation(), Sound.BLOCK_DISPENSER_DISPENSE, 1f, 1f);
             player.sendMessage(ChatColor.GRAY + "This horse has been locked.");
             plugin.getLogger().info(player.getName() + " tamed and autolocked " + (horse.getCustomName() != null ?
                 horse.getCustomName() : horse.getVariant().toString()) + " with UUID " +
@@ -424,7 +424,7 @@ public class CorralListener implements Listener {
             utils.updateHorse(lhorse, horse);
         }
     }
-    
+
     @EventHandler
     public void onEntityTame(EntityTameEvent event) {
         if(plugin.config.AUTO_LOCK) {
@@ -435,7 +435,7 @@ public class CorralListener implements Listener {
                     owner.sendMessage(ChatColor.GRAY + "You cannot lock any more horses.");
                 } else if (!utils.isHorseLocked((Horse)entity)) {
                     utils.lockHorse((Horse)entity, owner.getUniqueId());
-                    owner.playSound(owner.getLocation(), Sound.CLICK, 1f, 1f);
+                    owner.playSound(owner.getLocation(), Sound.BLOCK_DISPENSER_DISPENSE, 1f, 1f);
                     owner.sendMessage(ChatColor.GRAY + "This horse has been locked.");
                     plugin.getLogger().info(owner.getName() + " tamed and autolocked " + (((Horse)entity).getCustomName() != null ?
                         ((Horse)entity).getCustomName() : ((Horse)entity).getVariant().toString()) + " with UUID " +
@@ -444,7 +444,7 @@ public class CorralListener implements Listener {
             }
         }
     }
-    
+
     @EventHandler
     public void onEntityDamage(EntityDamageEvent event) {
         if(event.getEntity() instanceof Horse && plugin.config.IMMORTALITY) {
@@ -459,7 +459,7 @@ public class CorralListener implements Listener {
             }
         }
     }
-    
+
     @EventHandler
     public void onEntityDamageByEntity(EntityDamageByEntityEvent event) {
         if(event.getEntity() instanceof Horse && plugin.config.STOP_PVP) {
@@ -478,7 +478,7 @@ public class CorralListener implements Listener {
             }
         }
     }
-    
+
     @EventHandler
     public void onEntityDeath(EntityDeathEvent event) {
         if(event.getEntity() instanceof Horse) {
@@ -488,12 +488,12 @@ public class CorralListener implements Listener {
             String causedBy = (horse.getKiller() == null ? "the environment" : horse.getKiller().getName());
             if(utils.isHorseLocked(horse)) {
                 utils.unlockHorse(horse.getUniqueId());
-                
+
                 if(owner instanceof Player && !owner.equals(horse.getPassenger()) && ((Player)owner).isOnline()) {
                     ((Player)owner).sendMessage(ChatColor.GRAY + (horse.getCustomName() != null ? horse.getCustomName() : horse.getVariant().toString()) +
                         " has died due to " + causedBy + (passenger.isEmpty() ? "." : " while being ridden by " + passenger + "."));
                 }
-                
+
                 plugin.getLogger().info(owner.getName() + "'s horse " + (horse.getCustomName() != null ? horse.getCustomName() : horse.getVariant().toString()) + "/" +
                     horse.getUniqueId() + " has died due to " + causedBy + (passenger.isEmpty() ? "." : " while being ridden by " + passenger + "."));
             } else if (horse.isTamed()) {
@@ -502,7 +502,7 @@ public class CorralListener implements Listener {
             }
         }
     }
-    
+
     @EventHandler
     public void onVehicleExit(VehicleExitEvent event) {
         if(event.getVehicle() instanceof Horse) {
@@ -523,7 +523,7 @@ public class CorralListener implements Listener {
             }
         }
     }
-    
+
     @EventHandler
     public void onInventoryOpen(InventoryOpenEvent event) {
         if(event.getInventory() instanceof HorseInventory && event.getInventory().getHolder() instanceof Horse) {
@@ -531,12 +531,12 @@ public class CorralListener implements Listener {
             LockedHorse lhorse;
             if((lhorse = config.Database.getHorse(horse.getUniqueId())) != null) {
                 if(!(lhorse.hasAccess(event.getPlayer().getUniqueId()) || lhorse.getOwner().equals(event.getPlayer().getUniqueId()) || event.getPlayer().hasMetadata(CobraCorral.HORSE_BYPASS))) {
-                    event.setCancelled(true);   
+                    event.setCancelled(true);
                 }
             }
         }
     }
-    
+
     @EventHandler
     public void onInventoryClose(InventoryCloseEvent event) {
         if(event.getInventory() instanceof HorseInventory && event.getInventory().getHolder() instanceof Horse) {
@@ -547,7 +547,7 @@ public class CorralListener implements Listener {
             }
         }
     }
-    
+
     @EventHandler
     public void onInventoryClick(InventoryClickEvent event) {
         if(event.getInventory().getHolder() instanceof Horse) {
@@ -566,7 +566,7 @@ public class CorralListener implements Listener {
             }
         }
     }
-    
+
     @EventHandler
     public void onInventoryDrag(InventoryDragEvent event) {
         if(event.getInventory().getHolder() instanceof Horse) {
@@ -579,7 +579,7 @@ public class CorralListener implements Listener {
             }
         }
     }
-    
+
     @EventHandler
     public void onPlayerQuit(PlayerQuitEvent event) {
         Player player = event.getPlayer();
@@ -592,7 +592,7 @@ public class CorralListener implements Listener {
             }
         }
     }
-    
+
     @EventHandler
     public void onPlayerJoin(final PlayerJoinEvent event) {
         //When a player joins the server, load their horses into the cache.
@@ -603,7 +603,7 @@ public class CorralListener implements Listener {
             }
         });
     }
-    
+
     @EventHandler
     public void onChunkUnload(ChunkUnloadEvent event) {
         final Map<UUID,Location> horses = new HashMap();
@@ -627,7 +627,7 @@ public class CorralListener implements Listener {
             });
         }
     }
-    
+
     @EventHandler
     public void onEntityPortal(EntityPortalEvent event) {
         if(event.getFrom().getWorld().getEnvironment().equals(Environment.THE_END) && event.getEntity() instanceof Horse) {

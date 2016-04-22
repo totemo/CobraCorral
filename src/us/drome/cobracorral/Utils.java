@@ -5,14 +5,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import net.minecraft.server.v1_8_R3.NBTBase;
-import net.minecraft.server.v1_8_R3.NBTTagCompound;
-import net.minecraft.server.v1_8_R3.NBTTagList;
+import net.minecraft.server.v1_9_R1.NBTBase;
+import net.minecraft.server.v1_9_R1.NBTTagCompound;
+import net.minecraft.server.v1_9_R1.NBTTagList;
 import org.bukkit.ChatColor;
 import org.bukkit.Chunk;
 import org.bukkit.World;
 import org.bukkit.command.CommandSender;
-import org.bukkit.craftbukkit.v1_8_R3.entity.CraftHorse;
+import org.bukkit.craftbukkit.v1_9_R1.entity.CraftHorse;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Horse;
 import org.bukkit.entity.Player;
@@ -20,12 +20,12 @@ import org.bukkit.entity.Player;
 public class Utils {
     CobraCorral plugin;
     Configuration config;
-    
+
     public Utils(CobraCorral plugin) {
         this.plugin = plugin;
         config = plugin.config;
     }
-    
+
     /*
     This method attempts to find and return a Horse entity matching the specified UUID.
     Using the cached location it attemps to load the chunk at that location and retrieve the entity.
@@ -45,8 +45,8 @@ public class Utils {
                 }
             }
         }
-        
-        
+
+
         plugin.getLogger().info("Failed to load horse " + lhorse.getUUID() + " from chunk at cached location " + lhorse.getLocation() +
             " for player " + getOwnerName(lhorse.getOwner()) + ", attempting seach of loaded chunks.");
         if(horse == null) {
@@ -62,11 +62,11 @@ public class Utils {
             " from any loaded chunk, will use cached location.");
         return horse;
     }
-    
+
     public boolean isHorseLocked(Horse horse) {
         return (config.Database.contains(horse.getUniqueId()));
     }
-    
+
     public boolean maxHorsesLocked(UUID playerID) {
         if(config.MAX_HORSES == 0) {
             return false;
@@ -76,20 +76,20 @@ public class Utils {
         else
             return false;
     }
-    
+
     public void lockHorse(Horse horse, UUID ownerID) {
         config.Database.addHorse(horse, ownerID);
     }
-    
+
     public void unlockHorse(UUID horseID) {
         config.Database.removeHorse(horseID);
     }
-    
+
     public void updateHorse(LockedHorse lhorse, Horse horse) {
         lhorse.updateHorse(horse);
         config.Database.updateHorse(lhorse);
     }
-    
+
     public boolean grantAccess(LockedHorse lhorse, UUID playerID) {
         if(lhorse.grantAccess(playerID)) {
             config.Database.addAccess(lhorse.getUUID(), playerID);
@@ -97,7 +97,7 @@ public class Utils {
         }
         return false;
     }
-    
+
     public boolean revokeAccess(LockedHorse lhorse, UUID playerID) {
         if(lhorse.revokeAccess(playerID)) {
             config.Database.removeAccess(lhorse.getUUID(), playerID);
@@ -105,11 +105,11 @@ public class Utils {
         }
         return false;
     }
-    
+
     public String getOwnerName(UUID playerID) {
         return plugin.getServer().getOfflinePlayer(playerID).getName();
     }
-    
+
     //Clear all meta keys from the player
     public void clearMetaKeys(Player player) {
         if(player.hasMetadata(CobraCorral.HORSE_INFO)) {
@@ -130,7 +130,7 @@ public class Utils {
             player.removeMetadata(CobraCorral.HORSE_TAME, plugin);
         }
     }
-    
+
     //Check if player has any of the meta keys used for right click interaction.
     public boolean hasMetaKeys(Player player) {
         if(player.hasMetadata(CobraCorral.HORSE_INFO)) {
@@ -153,7 +153,7 @@ public class Utils {
             return false;
         }
     }
-    
+
     //Method to return command information to the player, based on their access to the commands via permissions.
     public void helpDisplay(CommandSender sender, String command) {
         //Attempt to parse a # or command name out of the provided command argument.
@@ -165,7 +165,7 @@ public class Utils {
                 command = "/" + command;
             }
         }
-        
+
         //A command list is built each time the help display is called, based on current player permissions and stored in this Map.
         Map<Integer,String> commands = new HashMap();
         int order = 1;
@@ -197,7 +197,7 @@ public class Utils {
         if(sender.hasPermission("ccorral.tame")) {
             commands.put(order,"/horse-tame"); order++;
         }
-        
+
         //If the topic is 0 and command argument is empty, display the command list in 2 columns of 8 lines.
         if(topic == 0 && command.isEmpty()) {
             sender.sendMessage(ChatColor.GRAY + "=======" + ChatColor.GOLD + "CobraCorral v" + plugin.getDescription().getVersion() +
@@ -317,14 +317,14 @@ public class Utils {
             }
         }
     }
-    
+
     //Parse inputed string list into a page of no more than 10 lines which is the max capacity of MC chat
     public List<String> pagifyOutput(List<String> unparsed, int page) {
         page = (page == 0) ? 1 : page;
         int maxPage = (int)Math.ceil(unparsed.size() / 9d);
         page = (page > maxPage) ? maxPage : page;
         List<String> pagified = new ArrayList<>();
-        
+
         if((unparsed.size() / 9) >= (page - 1)) {
             int firstOnPage = (page - 1) * 9;
             pagified = unparsed.subList(firstOnPage, firstOnPage + ((unparsed.size() / 9 < page) ? (unparsed.size() % 9) : 9));
@@ -333,10 +333,10 @@ public class Utils {
             }
             pagified.add(ChatColor.GRAY + "Displaying page " + page + " of " + maxPage); //Add the footer.
         }
-        
+
         return pagified;
     }
-    
+
     //Code implimented from https://github.com/RedPanda4552/HorseStats to acquire speed from NMS
     public static double getSpeed(Horse horse) {
         CraftHorse cHorse = (CraftHorse) horse;
@@ -351,11 +351,11 @@ public class Utils {
                 if (base.toString().contains("generic.movementSpeed")) {
                     speed = attrCompound.getDouble("Base");
                 }
-            }   
+            }
         }
         return speed * 43;
     }
-    
+
     //Implimented algorithm from Zyin's HUD for jump height calculations.
     public static double getJumpHeight(Horse horse) {
         //simulate gravity and air resistance to determine the jump height
@@ -369,7 +369,7 @@ public class Utils {
     	}
     	return jumpHeight;
     }
-    
+
     public static boolean nameChecker(String name, String check) {
         String tempName = ((name.startsWith("\"") && name.endsWith("\"")) && !(check.startsWith("\"") && check.endsWith("\""))) ? name.substring(1, name.length() -1) : name;
         if(tempName.equalsIgnoreCase(check)) {
